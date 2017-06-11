@@ -1,0 +1,186 @@
+## bochs调试命令
+转自博客：[bochs调试方法与指令详解](http://blog.csdn.net/liu0808/article/details/53099099)，
+并做了部分修改。
+
+### bochs调试FAQ
+`Q`：如何从引导扇区开始设置断点？
+
+`A`：BIOS被载入内存中运行，其引导扇区的地址一般都是`0x7c00`，因为在实模式下，
+    逻辑地址和物理地址是一一对应的, 所以我们可以在启动bochs调试的命令行下输入：
+    `pb 0x7c00`或者`vb 0:0x7c00`；接着输入`c`；bochs就会在`0x7c00`处停下。
+
+-----
+`Q`：我想在单步执行(`s`)后看到寄存器的变化情况, 该怎么设置？
+
+`A`：输入`trace-reg on`后，再执行单步调试的时候都会显示寄存器的当前状态了。
+
+-----
+`Q`：在单步调试的时候，遇到一个调用子程序的指令，输入`s`会把调试跳进子程序中，
+    如何只执行子程序而不要陷进去调试？
+
+`A`：在调试子程序的指令处，不用`s`，用`n`或`p`
+
+-----
+`Q`：查看当前堆栈的命令？
+
+`A`：`print-stack`
+
+### 基本调试命令
+
+Table 1. 部分Bochs调试指令
+
+|行为           | 指令           | 举例  |
+| ------------- |:-------------:| :-----:|
+| 在某物理地址设置断点         | b addr      | b 0x30400 |
+| 显示当前所有断点信息         | info break  |   info break |
+| 继续执行，直到遇上断点       | c           | c |
+| 单步执行                    | s           | s |
+| 单步执行（遇到函数则跳过）    | n           | n |
+| 查看寄存器信息  | info cpu/r/fp/sreg/creg  | info cpu/r/fp/sreg/creg |
+| 查看堆栈                    | print-stack | print-stack |
+| 查看内存物理地址内容         | xp /nuf addr | xp /40bx 0x9013e |
+| 查看线性地址内容             | x /nuf addr | x /40bx 0x13e |
+| 反汇编一段内存               | u start end | u 0x30400 0x3040D |
+| 反汇编执行的每一条指令        | trace-on    | trace-on |
+| 每执行一条指令就打印CPU信息   | trace-reg   | trace-reg |
+
+其中`xp /40bx 0x9013e`这样的格式可能显得有点复杂，读者可以用`help x`这一指令
+在Bochs中看一下它代表的意义
+
+### 执行控制
+1. `c|cont|continue` 向下执行，相当于WinDBG的`g`
+2. `s|step|stepi [count]` 单步执行，相当于WinDBG的`t`，`count`默认为`1`
+3. `p|n|next` 执行一条指令，把整个函数当作一个整体来执行，类似于WinDBG的`p`
+4. `q|quit|exit` 退出调试，同时关闭虚拟机
+5. `Ctrl-C` 结束执行状态，返回调试器提示符
+6. `Ctrl-D` if at empty line on command line, exit
+
+### 执行断点
+1. `vb|vbreak [seg:off]`` 给虚拟地址添加断点
+2. `lb|lbreak [addr]` 给线性地址添加断点，相当于WinDBG的`bp`
+3. `pb|pbreak|b|break [addr]` 在物理地址上下断点
+4. `blist` 显示断点状态，相当于WinDBG的`bl`
+5. `bpd|bpe [num]` 禁用/启用断点，`num`是断点号，可以用`blist`命令查询
+6. `d|del|delete [num]` 删除断点，`mum`是断点号，可以用`blist`命令查询
+
+### 读写断点
+1. `watch read [addr]` 设置读断点
+2. `watch write [addr]` 设置写断点
+3. `unwatch read [addr]` 清除读断点
+4. `unwatch write [addr]` 清除写断点
+5. `watch` 显示当前所有读写断点
+6. `unwatch` 清除当前所有读写断点
+7. `watch stop|continue` 开关选项，设置遇到读写断点时中断下来还是显示出来但
+是继续运行
+
+### 内存操作
+##### 1. `x /nuf [addr]` 显示线性地址的内容
+##### 2. `xp /nuf [addr]` 显示物理地址的内容
+- `n` 显示的单元数
+- `u` 每个显示单元的大小，u可以是下列之一：
+    - `b` byte，1个字节
+    - `h` hard-word，2个字节
+    - `w` word，4个字节
+    - `g` giant-word，8个字节
+
+> 注意: 这种命名法是按照GDB习惯的，而并不是按照inter的规范。
+
+ - `f` 显示格式，f可以是下列之一：
+    - `x` 按照十六进制显示
+    - `d` 十进制显示
+    - `u` 按照无符号十进制显示
+    - `o` 按照八进制显示
+    - `t` 按照二进制显示
+    - `c` 按照字符显示
+
+> `n`、`f`、`u`是可选参数，如果不指定，则`n`默认为`1`，`u`默认是`w`，`f`默认是`x`
+
+> 如果前面使用过`x`或者`xp`命令，会按照上一次的`x`或者`xp`命令所使用的值
+
+> `addr`也是一个可选参数，如果不指定，`addr`是`0`
+
+##### 3. `setpmem [addr] [size] [val]` 设置物理内存某地址的内容
+> 需要注意的是，每次最多只能设置`4`个字节
+
+但这样是可以的：
+```
+<bochs:1> setpmem 0x00000000 0x4 0x11223344
+<bochs:2> x /4 0x00000000
+[bochs]:
+0x00000000 <bogus+ 0>: 0x11223344 0x00000000 0x00000000 0x00000000
+```
+
+这样也可以：
+```
+<bochs:1> setpmem 0x00000000 0x2 0x11223344
+<bochs:2> x /4 0x00000000
+[bochs]:
+0x00000000 <bogus+ 0>: 0x00003344 0x00000000 0x00000000 0x00000000
+```
+或者：
+```
+<bochs:1> setpmem 0x00000000 0x1 0x20
+<bochs:2> x /4 0x00000000
+[bochs]:
+0x00000000 <bogus+ 0>: 0x00000020 0x00000000 0x00000000 0x00000000
+```
+
+下面的做法都会导致出错：
+```
+<bochs:1> setpmem 0x00000000 0x3 0x112233
+Error: setpmem: bad length value = 3
+<bochs:2> setpmem 0x00000000 0x8 0x11223344
+Error: setpmem: bad length value = 8
+```
+
+##### 4. `crc [start] [end]` 显示物理地址`start`到`end`之间数据的CRC
+
+### 寄存器操作
+1. `set $reg = val` 设置寄存器的值
+2. `r|reg|registers reg = val` 同上
+3. `dump_cpu` 显示完整的CPU信息
+4. `set_cpu` 设置CPU状态，这里可以设置`dump_cpu`所能显示出来的所有CPU状态
+
+## 反汇编命令
+1. `u|disas|disassemble [/num] [start] [end]` 反汇编物理地址`start`到`end`
+    之间的代码，如果不指定参数则反汇编当前`EIP`指向的代码
+    - `num`是可选参数，指定处理的代码量
+2. `set $disassemble_size = 0|16|32` `$disassemble_size`变量指定反汇编使用的段
+大小
+3. `set $auto_disassemble = 0|1` `$auto_disassemble`决定每次执行中断下来的
+时候（例如遇到断点、Ctrl-C等）是否反汇编当前指令
+
+### 其他命令
+1. `trace-on|trace-off` Tracing开关打开后，每执行一条指令都会将反汇编的结果
+    显示出来
+2. `ptime` 显示Bochs自本次运行以来执行的指令条数
+3. `sb [val]` 再执行val条指令就中断。`val`是64-bit整数，以`L`结尾，形如`1000L`
+4. `sba [val]` 执行到Bochs自本次运行以来的**第val条**指令就中断。
+    val是64-bit整数，以`L`结尾，形如`1000L`
+5. `modebp` 设置切换到v86模式时中断
+6. `record ["filename"]` 将输入的调试指令记录到文件中。文件名必须包含引号
+7. `playback ["filename"]` 回放record的记录文件。文件名必须包含引号
+8. `print-stack [num]` 显示堆栈，`num`默认为`16`，表示打印的条数
+9. `?|calc` 和WinDBG的`?`命令类似，计算表达式的值
+10. `load-symbols [global] filename [offset]` 载入符号文件。
+    如果设定了`global`关键字，则符号针对所有上下文都有效。
+    `offset`会默认加到所有的`symbol`地址上。
+    `symbol`文件的格式为：`%x %s`。
+
+### info命令
+1. `info program` 显示程序执行的情况
+2. `info registers|reg|r` 显示寄存器的信息
+3. `info pb|pbreak|b|break` 相当于`blist`
+4. `info dirty` 显示脏页的页地址
+5. `info cpu` 显示所有CPU寄存器的值
+6. `info fpu` 显示所有FPU寄存器的值
+7. `info idt` 显示IDT
+8. `info gdt [num]` 显示GDT
+9. `info ldt` 显示LDT
+10. `info tss` 显示TSS
+11. `info pic` 显示PIC
+12. `info ivt [num] [num]` 显示IVT
+13. `info flags` 显示状态寄存器
+14. `info cr` 显示CR系列寄存器
+15. `info symbols` 显示symbol信息
+16. `info ne2k|ne2000` 显示虚拟的ne2k网卡信息
