@@ -52,7 +52,7 @@ SECTION MBR vstart=0x7c00
     ; 下面三行为函数 rd_disk_m_16 传递参数
     mov eax, LOADER_START_SECTOR    ; 起始扇区LBA地址（28位，故用eax）
     mov bx,  LOADER_BASE_ADDR       ; 写入的地址
-    mov cx,  1                      ; 待读入的扇区数，暂定为1个扇区
+    mov cx,  LOADER_SECTOR_NUMBER   ; 待读入的扇区数
     call rd_disk_m_16               ; 以下读取程序的起始部分（一个扇区）
     
     jmp LOADER_BASE_ADDR            ; 跳转执行loader
