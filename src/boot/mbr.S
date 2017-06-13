@@ -54,8 +54,10 @@ SECTION MBR vstart=0x7c00
     mov bx,  LOADER_BASE_ADDR       ; 写入的地址
     mov cx,  LOADER_SECTOR_NUMBER   ; 待读入的扇区数
     call rd_disk_m_16               ; 以下读取程序的起始部分（一个扇区）
-    
-    jmp LOADER_BASE_ADDR            ; 跳转执行loader
+
+    ; 0x300 是标签 loader_start 在loader.S中的偏移地址（手工凑的）
+    jmp LOADER_BASE_ADDR + 0x300    ; 跳转执行loader
+
 
 ;----------------------------------------------------------
 ; 函数：rd_disk_m_16 （意为：在16位模式下读硬盘）
@@ -100,13 +102,13 @@ rd_disk_m_16:
     ; 端口 0x1f6 的高4位用于设置其他属性
     shr eax, cl
     and al, 0x0f    ; LBA地址的第 24 ~ 27 位
-    or  al, 0xe0    ; 设置第 7 ~ 4 bit为1110，表示LBA模式 
-    mov dx, 0x1f6   
+    or  al, 0xe0    ; 设置第 7 ~ 4 bit为1110，表示LBA模式
+    mov dx, 0x1f6
     out dx, al
 
 ; 第3步：向端口 0x1f7 (Status) 写入读命令：0x20
     mov dx, 0x1f7
-    mov al, 0x20 
+    mov al, 0x20
     out dx, al
 
 ; 第4步：检测硬盘状态
@@ -118,12 +120,12 @@ rd_disk_m_16:
                     ; 第7位为1表示硬盘忙
     cmp al, 0x08    ; 判断第3位是否为1
     jnz .not_ready  ; 若未准备好，继续等
-    
+
 ; 第5步：从端口 0x1f0 (Data, 16bit) 读取数据
 
     ; di 为要读取的扇区数，一个扇区有512字节，每次读入一个字（2字节），
     ; 共需 di*512/2 次，所以 di*256
-    
+
     mov ax, di
     mov dx, 256     ; 256 超过了8位的表示范围，故用16位乘法，积为32位
     mul dx          ; ax*dx，积(32bit)的高16位存放在dx中，低16位在ax中
@@ -137,7 +139,7 @@ rd_disk_m_16:
     add bx, 2       ; 每次读入2个字节，地址要增加2
     loop .go_on_read
     ret
-    
+
 ;;;;;;;;;; 读取硬盘结束 ;;;;;;;;;;
 
     times 510-($-$$) db 0
