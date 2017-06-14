@@ -1,5 +1,6 @@
 ; boot.inc
-; ---------- loader 和 kernel 的配置信息 ----------
+
+; ------------------ loader 的配置信息 -----------------
 
 ; loader 被加载到内存的地址
 LOADER_BASE_ADDR  	equ 0x900
@@ -12,12 +13,22 @@ LOADER_START_SECTOR	equ 0x2
 ; MBR中加载loader时，此为待读入的扇区数
 LOADER_SECTOR_NUMBER 	equ 4
 
+; ------------------ kernel 的配置信息 -----------------
+; elf格式的内核文件kernel.bin加载到内存中的地址
 KERNEL_BIN_BASE_ADDR	equ	0x70000
-KERNEL_IMAGE_BASE_ADDR	equ	0x1500
-KERNEL_START_SECTOR		equ 0x9
 
+; loader解析内核文件kernel.bin后生成内核映像，此映像在内存中的地址
+KERNEL_IMAGE_BASE_ADDR	equ	0x1500
+
+; 内核文件kernel.bin在硬盘中所在的扇区号
+KERNEL_START_SECTOR	equ 	0x9
+
+; 内核映像的入口地址
+KERNEL_ENTRY_POINT	equ 	0xc0001500
+
+; ------------------ 页表配置 -----------------
 ; 页目录表的起始地址
-PAGE_DIR_TABLE_POS		equ	0x100000
+PAGE_DIR_TABLE_POS	equ	0x100000
 
 ; ------------------ GDT描述符属性 -----------------
 ;;;;; 形式：DESC_字段名_字段相关信息 ;;;;;
@@ -96,3 +107,6 @@ PG_RW_R		equ	00b		; 读写位(bit 1)，0表示只读
 PG_RW_W		equ 10b		; 读写位(bit 1)，1表示可读可写
 PG_US_S		equ 000b	; (bit 2)，0表示处于Supervisor级，用户级(3 级)程序不可访问
 PG_US_U		equ	100b	; (bit 2)，1表示User级，任意级别特权的程序都可以访问
+
+;-------------  program type 定义   --------------
+PT_NULL		equ 0
