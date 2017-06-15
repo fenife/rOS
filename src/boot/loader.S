@@ -471,7 +471,7 @@ rd_disk_m_32:
 .go_on_read:
     in ax, dx
     mov [ebx], ax   
-    add bx, 2       ; 每次读入2个字节，地址要增加2
+    add ebx, 2       ; 每次读入2个字节，地址要增加2
     loop .go_on_read
     ret
 
