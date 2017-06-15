@@ -1,27 +1,33 @@
-TOP_DIR = .
-BOOT_DIR = ${TOP_DIR}/boot
-KERNEL_DIR = ${TOP_DIR}/kernel
+ENTRY_POINT = 0xc0001500
 
-INC_DIR	:= ./include
-BOOT_INC_DIR := ./boot/
+AS = nasm
+CC = gcc
+LD = ld
 
-OBJ :=
+TOP_DIR   = .
+BUILD_DIR = ./build
+OBJS_DIR  = ${BUILD_DIR}
+
+INC_DIR	:= ${TOP_DIR}/include
+INC_DIR +=
+
+ASFLAGS := -f elf
+CFLAGS  := -I ${INC_DIR} -c
+LDFLAGS := -Ttext ${ENTRY_POINT} -e main
+
+OBJS := ${OBJS_DIR}/main.o ${OBJS_DIR}/print.o
 
 all :
-	nasm -I ${BOOT_INC_DIR} -o ${BOOT_DIR}/mbr.bin ${BOOT_DIR}/mbr.S
-	nasm -I ${BOOT_INC_DIR} -o ${BOOT_DIR}/loader.bin ${BOOT_DIR}/loader.S
-	gcc -c -o ${KERNEL_DIR}/main.o ${KERNEL_DIR}/main.c
-	ld ${KERNEL_DIR}/main.o -Ttext 0xc0001500 -e main -o ${KERNEL_DIR}/kernel.bin
+	${AS} ${ASFLAGS} -o ${OBJS_DIR}/print.o ${TOP_DIR}/lib/kernel/print.S
+	${CC} ${CFLAGS} -o ${OBJS_DIR}/main.o ${TOP_DIR}/kernel/main.c
+	${LD} ${LDFLAGS} -o ${OBJS_DIR}/kernel.bin ${OBJS}
 
 mbr :
-	nasm -I ${BOOT_INC_DIR} -o ${BOOT_DIR}/mbr.bin ${BOOT_DIR}/mbr.S
+	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/mbr.bin ${TOP_DIR}/boot/mbr.S
+	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/loader.bin ${TOP_DIR}/boot/loader.S
 
-loader :
-	nasm -I ${BOOT_INC_DIR} -o ${BOOT_DIR}/loader.bin ${BOOT_DIR}/loader.S
-
-kernel :
-	gcc -c -o ${KERNEL_DIR}/main.o ${KERNEL_DIR}/main.c
-	ld ${KERNEL_DIR}/main.o -Ttext 0xc0001500 -e main -o ${KERNEL_DIR}/kernel.bin
+hd	:
+	./dd.sh
 
 clean :
 	rm $(shell find ./ -name *.o) -f

@@ -1,6 +1,7 @@
 *.bin
 *.sh
 test/
+./build
 
 # Prerequisites
 *.d
