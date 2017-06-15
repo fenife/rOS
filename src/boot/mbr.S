@@ -2,7 +2,7 @@
 ; 主引导程序：
 ; 让MBR可以读取硬盘
 ;----------------------------------------------------------
-%include "boot.inc"
+%include "boot.h"
 SECTION MBR vstart=0x7c00
     mov ax, cs
     mov ds, ax

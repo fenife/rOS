@@ -2,7 +2,7 @@
 ; 内核加载程序：
 ;   加载内核文件kernel.bin，初始化内核并跳转执行
 ;----------------------------------------------------------
-%include "boot.inc"
+%include "boot.h"
 section loader vstart=LOADER_BASE_ADDR
 
 ; 定义保护模式下的栈，用于初始化esp
