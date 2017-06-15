@@ -228,9 +228,6 @@ p_mode_start:
 ; 在开启分页后，用GDT的新地址重新加载
     lgdt [gdt_ptr]
 
-    ; 显存段段基址已经被更新，用字符V表示virtual addr
-    mov byte [gs:160], 'V'      ; 在第二行行首显示字符'V'
-
 ; 为防止以后出现各种奇怪的问题，强制刷新流水线，更新gdt
     jmp SELECTOR_CODE: enter_kernel
 
