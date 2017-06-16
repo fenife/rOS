@@ -18,13 +18,14 @@ LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 OBJS := ${OBJS_DIR}/main.o ${OBJS_DIR}/print.o
 
 all :
-	${AS} ${ASFLAGS} -o ${OBJS_DIR}/print.o ${TOP_DIR}/lib/kernel/print.S
-	${CC} ${CFLAGS} -o ${OBJS_DIR}/main.o ${TOP_DIR}/kernel/main.c
-	${LD} ${LDFLAGS} -o ${OBJS_DIR}/kernel.bin ${OBJS}
-
-mbr :
 	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/mbr.bin ${TOP_DIR}/boot/mbr.S
 	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/loader.bin ${TOP_DIR}/boot/loader.S
+	${AS} ${ASFLAGS} -o ${OBJS_DIR}/print.o ${TOP_DIR}/lib/kernel/print.S
+	${AS} ${ASFLAGS} -o ${OBJS_DIR}/kernel.o ${TOP_DIR}/kernel/kernel.S
+	${CC} ${CFLAGS} -o ${OBJS_DIR}/main.o ${TOP_DIR}/kernel/main.c
+
+rld :
+	${LD} ${LDFLAGS} -o ${OBJS_DIR}/kernel.bin ${OBJS}
 
 hd	:
 	./dd.sh
