@@ -1,11 +1,14 @@
 ; print.S
-;   实现字符串打印
-;   暂时只处理回车、换行、退格这三种控制字符；其他的都被认为是可见字符
+;   实现整数打印，打印的数字为16进制形式
+;   原理：将数字转换成对应的字符，比如数字9转换为字符'9'(0x39)
 
 ; 定义显存段的选择子，显存段描述符的索引值为0x0003
 TI_GDT  equ 0
 RPL0    equ 0
 SELECTOR_VIDEO  equ (0x0003<<3) + TI_GDT + RPL0
+
+section .data
+put_int_buf     dq  0   ;定义8字节缓冲区用于存储转换后的字符
 
 [bits 32]
 section .text
@@ -177,4 +180,74 @@ put_char:
 
 .put_char_done:
     popad               ; 把之前入栈的8个32位寄存器恢复
+    ret
+
+;------------------------   put_int   ----------------------------
+; 功能描述：实现整数打印，打印的数字为16进制形式
+; 输入：栈中的参数为待打印的数字
+; 输出：在屏幕上打印16进制数字，并不会打印前缀0x，
+;       如打印10进制15时，只会直接打印f，不会是0xf
+;------------------------------------------------------------------
+global put_int
+put_int:
+    pushad
+    mov ebp, esp
+    mov eax, [ebp + 9*4]    ; call的返回地址占4字节 + pushad的8个4字节
+    mov edx, eax            ; edx和eax中都是参数（要打印的数字）
+    mov edi, 7              ; 指向缓冲区最后一个字节
+                            ; 存储数字最低4位二进制对应的字符
+    mov ecx, 8              ; 32位数字，每4位用一个16进制数字表示，共8个
+    mov ebx, put_int_buf    ; 缓冲区基址
+
+; 将32位数字按照16进制的形式从低位到高位逐个处理，共处理8个16进制数字
+.16based_4bits:         ; 每4位二进制是16进制数字的1位，遍历每一位16进制数字
+    and edx, 0x0000000F ; 解析16进制数字的每一位
+                        ; and与操作后，edx只有低4位有效
+    cmp edx, 9          ; 数字0~9和a~f需要分别处理成对应的字符
+    jg .is_A2F
+    add edx, '0'        ; ascii码是8位大小，add求和操作后，edx低8位有效
+    jmp .store
+.is_A2F:
+    sub edx, 10         ; A~F 减去10所得到的差，
+    add edx, 'A'        ; 再加上字符A的ascii码，便是A~F对应的ascii码
+; 将每一位数字转换成对应的字符后，按照类似“大端”的顺序存储到缓冲区put_int_buf
+; 高位字符放在低地址，低位字符要放在高地址，
+; 这样便和大端字节序类似，只不过咱们这里是字符序
+.store:
+    ; 此时dl中应该是数字对应的字符的ascii码
+    mov [ebx + edi], dl ; ebx为buf基址，edi为buf偏移量
+    dec edi
+    shr eax, 4          ; 处理数字的下一个4位
+    mov edx, eax
+    loop .16based_4bits
+
+; 现在put_int_buf中已全是转换后的字符，打印前，
+; 先把高位连续的字符去掉，比如把字符000123变成123
+.ready_to_print:
+    inc edi             ; 此时edi退减为-1(0xffffffff)，加1使其为0
+.skip_prefix_0:
+    cmp edi, 8          ; 若已经比较第9个字符了，表示待打印的字符串为全0
+    je .full_0
+; 找出连续的'0'字符，edi作为非'0'字符的最高位字符的偏移
+.go_on_skip:
+    mov cl, [put_int_buf + edi]     ; 取buf中非'0'的字符
+    inc edi
+    cmp cl, '0'
+    je .skip_prefix_0   ; 继续判断下一位字符是否为字符'0'(不是数字0)
+    dec edi             ; edi在上面的inc操作中指向了下一个字符，
+                        ; 若当前字符不为'0'，要恢复edi指向当前字符
+    jmp .put_each_num
+
+.full_0:
+    mov cl, '0'         ; 输入的数字为全0时，则只打印'0'
+.put_each_num:
+    push ecx            ; 此时cl中为可打印的字符，
+                        ; 压入栈中作为put_char的参数
+    call put_char
+    add  esp, 4         ; 清理栈
+    inc  edi            ; 使edi指向下一个打印的字符
+    mov  cl, [put_int_buf + edi]    ; 获取下一个字符到cl
+    cmp  edi, 8
+    jl  .put_each_num
+    popad
     ret
