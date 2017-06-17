@@ -1,4 +1,4 @@
-; kernel.S
+; intr_handler.S
 ;   用汇编编写33个一样的中断处理程序：打印字符串
 
 [bits 32]
