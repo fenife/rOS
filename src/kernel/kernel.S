@@ -3,7 +3,7 @@
 
 [bits 32]
 ; 若在相关的异常中cpu已经自动压入了错误码，为保持栈中格式统一，这里不做操作
-%define ERROR_CODE　nop
+%define ERROR_CODE  nop
 ; 若在相关的异常中cpu没有压入错误码,为了统一栈中格式，就手工压入一个0
 %define ZERO        push 0
 
