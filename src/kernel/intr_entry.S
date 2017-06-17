@@ -7,9 +7,8 @@
 ; 若在相关的异常中cpu没有压入错误码,为了统一栈中格式，就手工压入一个0
 %define ZERO        push 0
 
-extern put_str;
+extern intr_handler_table   ; C中注册的中断处理程序数组
 section .data
-intr_str db "interrupt occur!", 0xa, 0      ; 后面两个：'\n' '\0'
 
 global intr_entry_table
 intr_entry_table:
@@ -26,23 +25,46 @@ section .text
 ; 自己知道自己的中断向量号是多少
 intr_%1_entry:      ; %1为此宏中的第1个参数
     %2              ; 宏，是压入错误码
-    push intr_str
-    call put_str
-    add esp, 4      ; 跳过参数intr_str
+
+    ; 调用C程序会破坏当前的寄存器环境，
+    ; 所以要保存上下文环境（4个段寄存器和8个通用寄存器）
+    push ds
+    push es
+    push fs
+    push gs
+    pushad
 
     ; 如果是从片上进入的中断，除了往从片上发送EOI外，还要往主片上发送EOI
     mov al, 0x20    ; 中断结束命令EOI
     out 0xa0, al    ; 向从片发送
     out 0x20, al    ; 向主片发送
 
-    add esp, 4      ; 跨过error_code
-    iret            ; 从中断返回，32位下等同指令iretd
+    ; 不管intr_handler_table中的目标中断处理程序是否需要参数，
+    ; 都一律压入中断向量号,方便调试
+    push %1
+
+    ; 调用 intr_handler_table 中的C版本中断处理函数
+    call [intr_handler_table + %1*4]
+    jmp intr_exit
 
 ; 多个属性相同的.data段最终会合并到一个大的segment中，
 ; 最终形成intr_entry_table数组
 . section .data
     dd intr_%1_entry    ; 存储各个中断入口程序的地址
 %endmacro
+
+section .text
+global intr_exit
+intr_exit:
+    ; 中断处理程序执行完成，恢复上下文环境
+    add esp, 4      ; 跳过中断号
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    add esp, 4      ; 跳过error_code
+    iretd
 
 ;------------------------------------------------------------------
 ; 用宏来定义33个(0~32)中断处理程序

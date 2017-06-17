@@ -9,20 +9,20 @@ BUILD_DIR = ./build
 OBJS_DIR  = ${BUILD_DIR}
 
 INC_DIR	:= ${TOP_DIR}/include
-INC_DIR += 
+INC_DIR +=
 
 ASFLAGS := -f elf
 CFLAGS  := -I ${INC_DIR} -c -fno-builtin
 LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
 OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
-		${OBJS_DIR}/print.o ${OBJS_DIR}/intr_handler.o
+		${OBJS_DIR}/print.o ${OBJS_DIR}/intr_entry.o
 
 all :
 	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/mbr.bin ${TOP_DIR}/boot/mbr.S
 	${AS} -I ${TOP_DIR}/boot/ -o ${OBJS_DIR}/loader.bin ${TOP_DIR}/boot/loader.S
 	${AS} ${ASFLAGS} -o ${OBJS_DIR}/print.o ${TOP_DIR}/lib/kernel/print.S
-	${AS} ${ASFLAGS} -o ${OBJS_DIR}/intr_handler.o ${TOP_DIR}/kernel/intr_handler.S
+	${AS} ${ASFLAGS} -o ${OBJS_DIR}/intr_entry.o ${TOP_DIR}/kernel/intr_entry.S
 	${CC} ${CFLAGS} -o ${OBJS_DIR}/interrupt.o ${TOP_DIR}/kernel/interrupt.c
 	${CC} ${CFLAGS} -o ${OBJS_DIR}/init.o ${TOP_DIR}/kernel/init.c
 	${CC} ${CFLAGS} -o ${OBJS_DIR}/main.o ${TOP_DIR}/kernel/main.c
