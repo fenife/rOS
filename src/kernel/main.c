@@ -7,6 +7,7 @@
 #include <sys/init.h>
 #include <string.h>
 #include <sys/kernel.h>
+#include <sys/debug.h>
 
 int main(void)
 {
@@ -17,11 +18,13 @@ int main(void)
     init_all();     /* 初始化所有模块 */
 
     memset(buf, 0, 20);
-    strcpy(buf, "hello world\n");
+    strcpy(buf, "hello world");
     len = strlen(buf);
 
     printk("%s, len = %d\n", buf, len);
 
+    kassert(1 == 2);
+    
     while (1)
         ;
 
