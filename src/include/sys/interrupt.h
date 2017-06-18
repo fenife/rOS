@@ -37,7 +37,19 @@ struct intr_desc {
 /* 类型定义 */
 typedef void* intr_handler;
 
+/* 定义中断的两种状态 */
+typedef enum
+{
+    INTR_OFF = 0,       /* 0表示关中断 */
+    INTR_ON             /* 1表示开中断 */
+} intr_status;
+
 /* 函数声明 */
 void idt_init(void);
+
+intr_status intr_get_status(void);
+intr_status intr_set_status(intr_status status);
+intr_status intr_enable(void);
+intr_status intr_disable(void);
 
 #endif  /* __KERNEL_INTERRUPT_H */

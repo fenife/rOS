@@ -1,5 +1,5 @@
 /* interrupt.c
- *   中断初始化，创建中断描述符表
+ *   中断初始化，创建中断描述符表，可自由开关中断
  */
 
 #include <stdint.h>
@@ -13,6 +13,16 @@
 #define PIC_M_DATA  0x21    /* 主片的数据端口是0x21 */
 #define PIC_S_CTRL  0xa0    /* 从片的控制端口是0xa0 */
 #define PIC_S_DATA  0xa1    /* 从片的数据端口是0xa1 */
+
+/* 用于获取中断状态 */
+/* 开中断时eflags寄存器的if位为1 */
+#define EFLAGES_IF  0x00000200
+
+/* 获取eflags寄存器的值，保存在变量var中，
+ * 寄存器约束 g 表示var可以放到内存或寄存器中
+ */
+#define GET_EFALGS(var) asm volatile ("pushfl; popl %0" : "=g"(var))
+
 
 static void create_idt_desc(struct intr_desc *desc,
         uint8_t attr, intr_handler handler);
@@ -173,4 +183,50 @@ void idt_init(void)
     asm volatile("lidt %0": : "m"(idt_operand));
 
     put_str("idt_init done\n");
+}
+
+/* 开中断，并返回开中断前的状态 */
+intr_status intr_enable(void)
+{
+    intr_status old_status;
+
+    if (INTR_ON == intr_get_status())
+    {
+        return INTR_ON;
+    }
+    else
+    {
+        asm volatile ("sti");   /* 开中断，sti指令将IF位置1 */
+        return INTR_OFF;
+    }
+}
+
+/* 关中断，并返回关中断前的状态 */
+intr_status intr_disable(void)
+{
+    if (INTR_ON == intr_get_status())
+    {
+        /* 关中断，cli指令将IF位置0 */
+        asm volatile ("cli" : : : "memory");
+        return INTR_ON;
+    }
+    else
+    {
+        return INTR_OFF;
+    }
+}
+
+/* 将中断状态设置为status */
+intr_status intr_set_status(intr_status status)
+{
+    return (status && INTR_ON) ? intr_enable() : intr_disable();
+}
+
+/* 获取当前中断状态 */
+intr_status intr_get_status(void)
+{
+    uint32_t eflags = 0;
+
+    GET_EFALGS(eflags);
+    return (EFLAGES_IF & eflags) ? INTR_ON : INTR_OFF;
 }
