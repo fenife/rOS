@@ -188,8 +188,6 @@ void idt_init(void)
 /* 开中断，并返回开中断前的状态 */
 intr_status intr_enable(void)
 {
-    intr_status old_status;
-
     if (INTR_ON == intr_get_status())
     {
         return INTR_ON;
