@@ -3,7 +3,7 @@ ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
 LD = ld
-RM = rm -rf 
+RM = rm -rf
 
 TOP_DIR   = .
 BUILD_DIR = ./build
@@ -19,7 +19,7 @@ LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
 OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/print.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/timer.o \
-		${OBJS_DIR}/debug.o
+		${OBJS_DIR}/debug.o ${OBJS_DIR}/string.o
 
 all : build rhd
 
@@ -37,6 +37,9 @@ ${OBJS_DIR}/timer.o : ${TOP_DIR}/device/timer.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/debug.o : ${TOP_DIR}/kernel/debug.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/string.o : ${TOP_DIR}/lib/string.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############

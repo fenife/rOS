@@ -2,8 +2,8 @@
  * 自定义数据类型
  */
 
-#ifndef __LIB_TYPES_H
-#define __LIB_TYPES_H
+#ifndef __LIB_STDINT_H
+#define __LIB_STDINT_H
 
 typedef signed char     int8_t;
 typedef unsigned char   uint8_t;
@@ -17,4 +17,4 @@ typedef unsigned int    uint32_t;
 typedef signed long long int    int64_t;
 typedef unsigned long long int  uint64_t;
 
-#endif  /* __LIB_TYPES_H */
+#endif  /* __LIB_STDINT_H */
