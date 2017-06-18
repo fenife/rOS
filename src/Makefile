@@ -19,8 +19,9 @@ LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
 OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/print.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/timer.o \
-		${OBJS_DIR}/debug.o ${OBJS_DIR}/string.o
-
+		${OBJS_DIR}/debug.o ${OBJS_DIR}/string.o ${OBJS_DIR}/vsprintf.o \
+		${OBJS_DIR}/printk.o
+		
 all : build rhd
 
 ##############     c代码编译     ###############
@@ -40,6 +41,12 @@ ${OBJS_DIR}/debug.o : ${TOP_DIR}/kernel/debug.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/string.o : ${TOP_DIR}/lib/string.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/vsprintf.o : ${TOP_DIR}/kernel/vsprintf.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/printk.o : ${TOP_DIR}/kernel/printk.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############

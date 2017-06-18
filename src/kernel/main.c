@@ -6,6 +6,7 @@
 #include <sys/print.h>
 #include <sys/init.h>
 #include <string.h>
+#include <sys/kernel.h>
 
 int main(void)
 {
@@ -19,8 +20,7 @@ int main(void)
     strcpy(buf, "hello world\n");
     len = strlen(buf);
 
-    put_str(buf);
-    put_int(len);
+    printk("%s, len = %d\n", buf, len);
 
     while (1)
         ;
