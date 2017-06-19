@@ -61,7 +61,7 @@ int bitmap_alloc(bitmap *bmp, uint32_t size)
     uint32_t bit_left = (bmp->len * 8 - free_bit_start);
     uint32_t next_bit = free_bit_start + 1;
     /* 在剩余的位中找到的空闲位的个数 */
-    uint32_t free_bits = -1;
+    uint32_t free_bits = 1;
 
     while (bit_left-- > 0)
     {
