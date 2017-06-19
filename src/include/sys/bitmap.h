@@ -21,7 +21,7 @@ typedef struct {
 } bitmap;
 
 void bitmap_init(bitmap *bmp);
-bool bitmap_get(bitmap *bmp, uint32_t index);
+bool bit_true(bitmap *bmp, uint32_t index);
 int bitmap_alloc(bitmap *bmp, uint32_t size);
 void bitmap_set(bitmap *bmp, uint32_t index, uint8_t vlaue);
 

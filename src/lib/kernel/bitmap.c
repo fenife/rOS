@@ -13,7 +13,7 @@ void bitmap_init(bitmap *bmp)
 }
 
 /* 判断index位是否为1，若为1则返回true，否则返回false */
-bool bitmap_get(bitmap *bmp, uint32_t index)
+bool bit_true(bitmap *bmp, uint32_t index)
 {
     uint32_t byte_idx = index / 8;    /* 向下取整用于索引数组 */
     uint32_t bit_idx  = index % 8;    /* 取余用于索引单字节内的位 */
@@ -66,7 +66,7 @@ int bitmap_alloc(bitmap *bmp, uint32_t size)
     while (bit_left-- > 0)
     {
         /* 若next_bit为0，表示是空闲位 */
-        if ( !(bitmap_get(bmp, next_bit)) )
+        if ( !(bit_true(bmp, next_bit)) )
         {
             free_bits++;
         }
