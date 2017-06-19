@@ -18,7 +18,7 @@
 
 phm_pool kernel_pool;   /* 内核物理内存池 */
 phm_pool user_pool;     /* 用户物理内存池 */
-vm_pool  kernel_vaddr;      /* 给内核分配虚拟内存地址 */
+vm_pool  kvm_pool;      /* 给内核分配虚拟内存地址 */
 
 /* 在pf表示的虚拟内存池中申请pg_need个虚拟页,
  * 成功则返回虚拟页的起始地址, 失败则返回NULL
@@ -31,17 +31,17 @@ static void * vaddr_get(poolfg fg, uint32_t pg_need)
 
     if (PF_KERNEL == fg)
     {
-        bit_idx_start = bitmap_alloc(&kernel_vaddr.bm, pg_need);
+        bit_idx_start = bitmap_alloc(&kvm_pool.bm, pg_need);
         if (-1 == bit_idx_start)
             return NULL;
 
         /* 将位图中本次分配的位置为1，表示已被占用 */
         while(i < pg_need)
         {
-            bitmap_set(&kernel_vaddr.bm, bit_idx_start + i++, 1);
+            bitmap_set(&kvm_pool.bm, bit_idx_start + i++, 1);
         }
 
-        vaddr_start = kernel_vaddr.vm_start + bit_idx_start * PG_SIZE;
+        vaddr_start = kvm_pool.vm_start + bit_idx_start * PG_SIZE;
     }
     else
     {
@@ -284,17 +284,17 @@ static void mem_pool_init(uint32_t all_mem)
     /* 下面初始化内核虚拟地址的位图，按实际物理内存大小生成数组
      * 用于维护内核堆的虚拟地址，所以要和内核内存池大小一致
      */
-    kernel_vaddr.bm.len = kbm_len;
+    kvm_pool.bm.len = kbm_len;
 
     /* 位图的数组指向一块未使用的内存，
      * 目前定位在内核物理内存池和用户物理内存池之外
      */
-    kernel_vaddr.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
+    kvm_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
 
     /* 虚拟内存池的起始地址 */
-    kernel_vaddr.vm_start = K_HEAP_START;
+    kvm_pool.vm_start = K_HEAP_START;
 
-    bitmap_init(&kernel_vaddr.bm);
+    bitmap_init(&kvm_pool.bm);
 
     printk("   mem_pool_init done\n");
 }

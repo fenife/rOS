@@ -55,7 +55,7 @@ typedef struct phm_pool {
     uint32_t size;      /* 本内存池字节容量 */
 } phm_pool;
 
-extern vm_pool  kernel_vaddr;  
+extern vm_pool  kvm_pool;  
 extern phm_pool kernel_pool; 
 extern phm_pool user_pool;
 
