@@ -111,7 +111,7 @@ static void page_table_add(void *_vaddr, void *_page_phyaddr)
     {
         if (!(*pte & 0x00000001))  /* 页表项不存在，创建页表项 */
         {
-            
+
 			*pte = (paddr | PG_US_U | PG_RW_W | PG_P_1);
         }
         else  /* 页表已存在 */
@@ -139,7 +139,7 @@ static void page_table_add(void *_vaddr, void *_page_phyaddr)
 }
 
 /* 分配pg_need个物理页空间
- * 成功则返回起始虚拟地址，失败时返回NULL 
+ * 成功则返回起始虚拟地址，失败时返回NULL
  *
  * 此函数的原理是三个动作的合成：
  * 1.通过vaddr_get在虚拟内存池中申请虚拟地址空间
@@ -149,10 +149,10 @@ static void page_table_add(void *_vaddr, void *_page_phyaddr)
  */
 void * malloc_page(poolfg fg, uint32_t pg_need)
 {
-    /* 确保所需内存页数不超过物理内存的容量 
+    /* 确保所需内存页数不超过物理内存的容量
      * 内存总容量为32MB
      * 内核和用户空间各约16MB，保守起见按15MB计算
-     * pg_need < 15 * 1024 * 1024 / 4096 = 3840页 
+     * pg_need < 15 * 1024 * 1024 / 4096 = 3840页
      */
     kassert(pg_need > 0 && pg_need < 3840);
 
@@ -175,7 +175,7 @@ void * malloc_page(poolfg fg, uint32_t pg_need)
         if (NULL == page_phyaddr)
         {
             /* 失败时要将曾经已申请的虚拟地址和物理页全部回滚，
-             * 在将来完成内存回收时再补充 
+             * 在将来完成内存回收时再补充
              */
             return NULL;
         }
@@ -188,14 +188,14 @@ void * malloc_page(poolfg fg, uint32_t pg_need)
 }
 
 /* 从内核物理内存池中申请pg_need页内存，
- * 成功则返回其虚拟地址，失败则返回NULL 
+ * 成功则返回其虚拟地址，失败则返回NULL
  */
 void * get_kernel_pages(uint32_t pg_need)
 {
     void * vaddr = malloc_page(PF_KERNEL, pg_need);
     if (NULL == vaddr)
         return NULL;
-    
+
     /* 若分配的地址不为空，将页框清0后返回 */
     memset (vaddr, 0, pg_need * PG_SIZE);
     return vaddr;

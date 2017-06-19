@@ -35,7 +35,7 @@ typedef enum pool_flag {
     PF_USER   = 2       /* 用户内存池 */
 } poolfg;
 
-/* virtual memory pool 
+/* virtual memory pool
  * 虚拟内存池，用于虚拟地址的管理
  * 相对于phm_pool，少了个成员size，是因为虚拟地址空间是4GB，
  * 可以说是无限大的空间
@@ -46,7 +46,7 @@ typedef struct vm_pool {
 } vm_pool;
 
 
-/* physical memory pool 
+/* physical memory pool
  * 物理内存池，用于管理实际物理上的内核内存池和用户内存池
  */
 typedef struct phm_pool {
@@ -55,8 +55,8 @@ typedef struct phm_pool {
     uint32_t size;      /* 本内存池字节容量 */
 } phm_pool;
 
-extern vm_pool  kvm_pool;  
-extern phm_pool kernel_pool; 
+extern vm_pool  kvm_pool;
+extern phm_pool kernel_pool;
 extern phm_pool user_pool;
 
 void mem_init(void);
