@@ -18,9 +18,9 @@ CFLAGS  := -Wall -I ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
 LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
 OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
-		${OBJS_DIR}/print.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/timer.o \
-		${OBJS_DIR}/debug.o ${OBJS_DIR}/string.o ${OBJS_DIR}/vsprintf.o \
-		${OBJS_DIR}/printk.o ${OBJS_DIR}/bitmap.o ${OBJS_DIR}/memory.o \
+		${OBJS_DIR}/timer.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/print.o \
+		${OBJS_DIR}/debug.o ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o \
+		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
 
 all : build rhd
 

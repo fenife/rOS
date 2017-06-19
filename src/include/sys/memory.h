@@ -22,6 +22,18 @@
  */
 #define K_HEAP_START    0xc0100000
 
+#define PG_P_1      1   /* 页表项或页目录项存在属性位：表示此页内存已存在 */
+#define PG_P_0      0   /* 表示此页内存不存在 */
+#define PG_RW_R     0   /* R/W 属性位值，读/执行 */
+#define PG_RW_W     2   /* R/W 属性位值，读/写/执行 */
+#define PG_US_S     0   /* U/S 属性位值, 系统级 */
+#define PG_US_U     4   /* U/S 属性位值, 用户级 */
+
+/* 内存池标记，用于判断用哪个内存池 */
+typedef enum pool_flag {
+    PF_KERNEL = 1,      /* 内核内存池 */
+    PF_USER   = 2       /* 用户内存池 */
+} poolfg;
 
 /* virtual memory pool 
  * 虚拟内存池，用于虚拟地址的管理
@@ -43,10 +55,14 @@ typedef struct phm_pool {
     uint32_t size;      /* 本内存池字节容量 */
 } phm_pool;
 
-extern vm_pool  kvm_pool;  
-extern phm_pool kph_pool; 
-extern phm_pool uph_pool;
+extern vm_pool  kernel_vaddr;  
+extern phm_pool kernel_pool; 
+extern phm_pool user_pool;
 
 void mem_init(void);
+uint32_t * get_pte(uint32_t vaddr);
+uint32_t * get_pde(uint32_t vaddr);
+void * get_kernel_pages(uint32_t pg_need);
+void * malloc_page(poolfg fg, uint32_t pg_need);
 
 #endif  /* __KERNEL_MEMORY_H */

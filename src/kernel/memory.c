@@ -2,13 +2,204 @@
  * 内存管理
  */
 
-#include <sys/memory.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+#include <sys/memory.h>
 #include <sys/kernel.h>
+#include <sys/bitmap.h>
+#include <sys/debug.h>
 
-vm_pool  kvm_pool;  /* 给内核分配虚拟内存地址 */
-phm_pool kph_pool;  /* 内核物理内存池 */
-phm_pool uph_pool;  /* 用户物理内存池 */
+/* 获取虚拟地址的高10位，即pde索引部分 */
+#define PDE_IDX(addr)   ((addr & 0xffc00000) >> 22)
+/* 获取虚拟地址的中间10位，即pte索引部分 */
+#define PTE_IDX(addr)   ((addr & 0x003ff000) >> 12)
+
+
+phm_pool kernel_pool;   /* 内核物理内存池 */
+phm_pool user_pool;     /* 用户物理内存池 */
+vm_pool  kernel_vaddr;      /* 给内核分配虚拟内存地址 */
+
+/* 在pf表示的虚拟内存池中申请pg_need个虚拟页,
+ * 成功则返回虚拟页的起始地址, 失败则返回NULL
+ */
+static void * vaddr_get(poolfg fg, uint32_t pg_need)
+{
+    int vaddr_start = 0;    /* 存放分配的起始虚拟地址 */
+    int bit_idx_start = -1;
+    uint32_t i = 0;
+
+    if (PF_KERNEL == fg)
+    {
+        bit_idx_start = bitmap_alloc(&kernel_vaddr.bm, pg_need);
+        if (-1 == bit_idx_start)
+            return NULL;
+
+        /* 将位图中本次分配的位置为1，表示已被占用 */
+        while(i < pg_need)
+        {
+            bitmap_set(&kernel_vaddr.bm, bit_idx_start + i++, 1);
+        }
+
+        vaddr_start = kernel_vaddr.vm_start + bit_idx_start * PG_SIZE;
+    }
+    else
+    {
+        /* 用户内存池，将来实现用户进程时再补充 */
+    }
+
+    return (void *)vaddr_start;
+}
+
+/* 获取虚拟地址vaddr对应的pte指针 */
+uint32_t * get_pte(uint32_t vaddr)
+{
+    /* 先访问到页目录表自己 + \
+     * 再用页目录项pde(页目录内页表的索引)做为pte的索引访问到页表 + \
+     * 再用pte的索引做为页内偏移
+     */
+    uint32_t * pte = (uint32_t *)( 0xffc00000
+            + ((vaddr & 0xffc00000) >> 10)
+            + PTE_IDX(vaddr) * 4 );
+
+    return pte;
+}
+
+/* 获取虚拟地址vaddr对应的pde指针 */
+uint32_t * get_pde(uint32_t vaddr)
+{
+    uint32_t * pde = (uint32_t *)( (0xfffff000) + PDE_IDX(vaddr) * 4 );
+
+    return pde;
+}
+
+/* 在pool指向的物理内存池中分配1个物理页，
+ * 成功则返回页框的物理地址,失败则返回NULL
+ */
+static void * palloc(phm_pool *pool)
+{
+    /* 扫描或设置位图要保证原子操作 */
+    int bit_idx = bitmap_alloc(&pool->bm, 1);   /* 分配一个物理页面 */
+    if (-1 == bit_idx)
+        return NULL;
+
+    bitmap_set(&pool->bm, bit_idx, 1);
+
+    uint32_t page_phyaddr = (pool->pm_start + (bit_idx * PG_SIZE));
+    return (void *)page_phyaddr;
+}
+
+/* 页表中添加虚拟地址_vaddr与物理地址_page_phyaddr的映射 */
+static void page_table_add(void *_vaddr, void *_page_phyaddr)
+{
+    uint32_t vaddr = (uint32_t)_vaddr;
+    uint32_t paddr = (uint32_t)_page_phyaddr;
+
+    uint32_t * pde = get_pde(vaddr);
+    uint32_t * pte = get_pte(vaddr);
+
+    /************************ 注意   *************************
+     * 执行*pte，会访问到空的pde。所以要确保pde创建完成后才能
+     * 执行*pte，否则会引发page_fault。
+     * 因此在*pde为0时，*pte只能出现在下面else语句块中的*pde后面
+     *******************************************************/
+
+    /* 页目录项和页表项的第0位为P，此处判断目录项是否存在
+     * 若为1,则表示该表已存在
+     */
+    if (*pde & 0x00000001)
+    {
+        if (!(*pte & 0x00000001))  /* 页表项不存在，创建页表项 */
+        {
+            
+			*pte = (paddr | PG_US_U | PG_RW_W | PG_P_1);
+        }
+        else  /* 页表已存在 */
+        {
+			PANIC("pte repeat\n");
+            *pte = (paddr | PG_US_U | PG_RW_W | PG_P_1);
+        }
+    }
+    /* 页目录项不存在，所以要先创建页目录项再创建页表项 */
+    else
+    {
+        /* 页表中用到的页框一律从内核空间分配 */
+        uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);
+        *pde = (pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1);
+
+        /******************* 将页表所在的页清0 *********************
+         * 必须把分配到的物理页地址pde_phyaddr对应的物理内存清0，
+         * 避免里面的陈旧数据变成了页表中的页表项，从而让页表混乱。
+         * pte的高20位会映射到pde所指向的页表的物理起始地址。
+         **********************************************************/
+        memset((void *)((int)pte & 0xfffff000), 0, PG_SIZE);
+        kassert((*pte & 0x00000001) == 0);
+        *pte = (paddr | PG_US_U | PG_RW_W | PG_P_1);
+    }
+}
+
+/* 分配pg_need个物理页空间
+ * 成功则返回起始虚拟地址，失败时返回NULL 
+ *
+ * 此函数的原理是三个动作的合成：
+ * 1.通过vaddr_get在虚拟内存池中申请虚拟地址空间
+ * 2.通过palloc在物理内存池中申请物理页
+ * 3.通过page_table_add将以上两步得到的虚拟地址和物理地址
+ *   在页表中完成映射
+ */
+void * malloc_page(poolfg fg, uint32_t pg_need)
+{
+    /* 确保所需内存页数不超过物理内存的容量 
+     * 内存总容量为32MB
+     * 内核和用户空间各约16MB，保守起见按15MB计算
+     * pg_need < 15 * 1024 * 1024 / 4096 = 3840页 
+     */
+    kassert(pg_need > 0 && pg_need < 3840);
+
+    void * vaddr_start = vaddr_get(fg, pg_need);
+    if (NULL == vaddr_start)
+    {
+        return NULL;
+    }
+
+    uint32_t vaddr = (uint32_t)vaddr_start;
+    uint32_t i = pg_need;
+    phm_pool * pool = fg & PF_KERNEL ? &kernel_pool : &user_pool;
+
+    /* 因为虚拟地址是连续的，但物理地址可以是不连续的，
+     * 所以要逐页做映射
+     */
+    while (i-- > 0)
+    {
+        void *page_phyaddr = palloc(pool);
+        if (NULL == page_phyaddr)
+        {
+            /* 失败时要将曾经已申请的虚拟地址和物理页全部回滚，
+             * 在将来完成内存回收时再补充 
+             */
+            return NULL;
+        }
+
+        /* 在页表中做映射 */
+        page_table_add((void *)vaddr, page_phyaddr);
+        vaddr += PG_SIZE;   /* 下一个虚拟页 */
+    }
+    return vaddr_start;
+}
+
+/* 从内核物理内存池中申请pg_need页内存，
+ * 成功则返回其虚拟地址，失败则返回NULL 
+ */
+void * get_kernel_pages(uint32_t pg_need)
+{
+    void * vaddr = malloc_page(PF_KERNEL, pg_need);
+    if (NULL == vaddr)
+        return NULL;
+    
+    /* 若分配的地址不为空，将页框清0后返回 */
+    memset (vaddr, 0, pg_need * PG_SIZE);
+    return vaddr;
+}
 
 /* 根据内存容量的大小初始化物理内存池的相关结构 */
 static void mem_pool_init(uint32_t all_mem)
@@ -18,10 +209,10 @@ static void mem_pool_init(uint32_t all_mem)
     /* 页表大小 = 1页的页目录表 + 第0和第768个页目录项指向同一个页表
      *          + 第769~1022个页目录项共指向254个页表，共256个页框
      */
-    uint32_t pte_size = PG_SIZE * 256;
+    uint32_t page_table_size = PG_SIZE * 256;
 
     /* 0x100000为低端1M内存 */
-    uint32_t used_mem = pte_size + 0x100000;
+    uint32_t used_mem = page_table_size + 0x100000;
     uint32_t free_mem = all_mem - used_mem;
 
     /* 1页为4k，不管总内存是不是4k的倍数，
@@ -50,14 +241,14 @@ static void mem_pool_init(uint32_t all_mem)
     uint32_t up_start = kp_start + kfree_pages * PG_SIZE;
 
     /* 初始化内核空间的物理内存池 */
-    kph_pool.pm_start = kp_start;
-    kph_pool.size = kfree_pages * PG_SIZE;
-    kph_pool.bm.len = kbm_len;
+    kernel_pool.pm_start = kp_start;
+    kernel_pool.size = kfree_pages * PG_SIZE;
+    kernel_pool.bm.len = kbm_len;
 
     /* 初始化用户空间的物理内存池 */
-    uph_pool.pm_start = up_start;
-    uph_pool.size = ufree_pages * PG_SIZE;
-    uph_pool.bm.len = ubm_len;
+    user_pool.pm_start = up_start;
+    user_pool.size = ufree_pages * PG_SIZE;
+    user_pool.bm.len = ubm_len;
 
     /********* 内核内存池和用户内存池位图 ***********
      * 不用数组而用堆内存来存储位图的原因：
@@ -71,39 +262,39 @@ static void mem_pool_init(uint32_t all_mem)
      * 内核的大小预计为70K左右。
      * 32M内存占用的位图是1k，内核内存池的位图先定在(0xc009a000)处
      */
-    kph_pool.bm.bits = (void *)MEM_BITMAP_BASE;
+    kernel_pool.bm.bits = (void *)MEM_BITMAP_BASE;
 
     /* 用户内存池的位图紧跟在内核内存池位图之后 */
-    uph_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len);
+    user_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len);
 
     /******************** 输出内存池信息 **********************/
-    printk("    - kernel pool bitmap start  : 0x%x\n", 
-            kph_pool.bm.bits);
-    printk("    - kernel pool phy addr start: 0x%x\n", 
-            kph_pool.pm_start);
-    printk("    - user pool bitmap start    : 0x%x\n", 
-            uph_pool.bm.bits);
-    printk("    - user pool phy addr start  : 0x%x\n", 
-            uph_pool.pm_start);
+    printk("    - kernel pool bitmap start  : 0x%x\n",
+            kernel_pool.bm.bits);
+    printk("    - kernel pool phy addr start: 0x%x\n",
+            kernel_pool.pm_start);
+    printk("    - user pool bitmap start    : 0x%x\n",
+            user_pool.bm.bits);
+    printk("    - user pool phy addr start  : 0x%x\n",
+            user_pool.pm_start);
 
     /* 位图初始化：全部置0 */
-    bitmap_init(&kph_pool.bm);
-    bitmap_init(&uph_pool.bm);
+    bitmap_init(&kernel_pool.bm);
+    bitmap_init(&user_pool.bm);
 
-    /* 下面初始化内核虚拟地址的位图，按实际物理内存大小生成数组 
+    /* 下面初始化内核虚拟地址的位图，按实际物理内存大小生成数组
      * 用于维护内核堆的虚拟地址，所以要和内核内存池大小一致
      */
-    kvm_pool.bm.len = kbm_len;
+    kernel_vaddr.bm.len = kbm_len;
 
     /* 位图的数组指向一块未使用的内存，
-     * 目前定位在内核物理内存池和用户物理内存池之外 
+     * 目前定位在内核物理内存池和用户物理内存池之外
      */
-    kvm_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
+    kernel_vaddr.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
 
     /* 虚拟内存池的起始地址 */
-    kvm_pool.vm_start = K_HEAP_START;
+    kernel_vaddr.vm_start = K_HEAP_START;
 
-    bitmap_init(&kvm_pool.bm);
+    bitmap_init(&kernel_vaddr.bm);
 
     printk("   mem_pool_init done\n");
 }
