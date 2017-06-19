@@ -21,7 +21,7 @@ bool bit_true(bitmap *bmp, uint32_t index)
     return (bmp->bits[byte_idx] & (BITMAP_MASK << bit_idx)) ? TRUE : FALSE;
 }
 
-/* 在位图中申请连续count个位，返回其起始位下标 */
+/* 在位图中申请连续size个bit，返回其起始位下标 */
 int bitmap_alloc(bitmap *bmp, uint32_t size)
 {
     uint32_t byte_idx = 0;  /* 用于记录空闲位所在的字节 */
