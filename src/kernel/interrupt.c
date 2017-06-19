@@ -62,7 +62,7 @@ static void pic_init(void)
     outb(PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
 
-    put_str("   pic_init_done\n");
+    put_str("   pic_init done\n");
 }
 
 /****************************************************

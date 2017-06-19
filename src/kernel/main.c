@@ -14,7 +14,7 @@ int main(void)
     char buf[20];
     size_t len = 0;
 
-    put_str("I am kernel\n");
+    put_str("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
     memset(buf, 0, 20);
@@ -23,8 +23,6 @@ int main(void)
 
     printk("%s, len = %d\n", buf, len);
 
-    kassert(1 == 2);
-    
     while (1)
         ;
 
