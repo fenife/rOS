@@ -18,7 +18,7 @@ bool bit_true(bitmap *bmp, uint32_t index)
     uint32_t byte_idx = index / 8;    /* 向下取整用于索引数组 */
     uint32_t bit_idx  = index % 8;    /* 取余用于索引单字节内的位 */
 
-    return (bmp->bits[byte_idx] & (BITMAP_MASK << bit_idx)) ? TRUE : FALSE;
+    return (bmp->bits[byte_idx] & (BITMAP_MASK << bit_idx)) ? true : false;
 }
 
 /* 在位图中申请连续size个bit，返回其起始位下标 */

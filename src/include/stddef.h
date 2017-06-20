@@ -8,9 +8,10 @@
 
 typedef enum
 {
-    FALSE = 0,
-    TRUE
+    false = 0,
+    true
 } bool;
+
 
 typedef signed int      ssize_t;
 typedef unsigned int    size_t;
