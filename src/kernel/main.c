@@ -1,26 +1,38 @@
 /* main.c
- *   测试kassert宏
+ *   测试线程执行
  */
 
 #include <stddef.h>
-#include <print.h>
-#include <init.h>
-#include <string.h>
 #include <kernel.h>
-#include <debug.h>
-#include <memory.h>
+#include <init.h>
+#include <thread.h>
+
+void k_thread_a(void *arg);
+
 
 int main(void)
 {
-    put_str("start kernel ... \n");
+    printk("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
-    void * addr = get_kernel_pages(3);
-    printk("\n - get_kernel_pages start vaddr is : 0x%x\n",
-        (uint32_t)addr);
+    thread_start("k_thread_a", 31, k_thread_a, "arg_a");
 
     while (1)
         ;
 
     return 0;
+}
+
+/* 在线程中运行的函数
+ * 用void*来通用表示参数，被调用的函数知道自己需要什么类型的参数，
+ * 自己转换后再用
+ */
+void k_thread_a(void *arg)
+{
+    char *para = (char *)arg;
+
+    while(1)
+    {
+        printk("%s \n", para);
+    }
 }
