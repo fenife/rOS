@@ -24,7 +24,7 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/timer.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/print.o \
 		${OBJS_DIR}/debug.o ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o \
 		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
-		${OBJS_DIR}/thread.o
+		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o
 
 all : build rhd
 
@@ -60,6 +60,9 @@ ${OBJS_DIR}/memory.o : ${TOP_DIR}/kernel/memory.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/thread.o : ${TOP_DIR}/thread/thread.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/list.o : ${TOP_DIR}/lib/kernel/list.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############
