@@ -2,11 +2,11 @@
  * 调用所有模块的初始化主函数
  */
 
-#include <sys/init.h>
-#include <sys/interrupt.h>
-#include <sys/print.h>
-#include <dev/timer.h>
-#include <sys/memory.h>
+#include <init.h>
+#include <interrupt.h>
+#include <print.h>
+#include <timer.h>
+#include <memory.h>
 
 /* 负责初始化所有模块 */
 void init_all(void)

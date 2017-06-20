@@ -2,9 +2,9 @@
  * 配置定时器/计数器，设置时钟中断信号的频率
  */
 
-#include <dev/timer.h>
-#include <sys/io.h>
-#include <sys/print.h>
+#include <timer.h>
+#include <io.h>
+#include <print.h>
 
 #define IRQ0_FREQUENCY      100     /* 时钟中断频率：100Hz */
 #define INPUT_FREQUENCY     1193180 /* 定时器/计数器的工作频率 */

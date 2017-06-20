@@ -3,8 +3,8 @@
  */
 
 #include <stdarg.h>
-#include <sys/print.h>
-#include <sys/kernel.h>
+#include <print.h>
+#include <kernel.h>
 
 static char buf[1024];
 

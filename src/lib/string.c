@@ -4,7 +4,7 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <sys/debug.h>
+#include <debug.h>
 
 /* stroe c throughout unsigned char s[n]
  * 将s起始的n个字节置为c

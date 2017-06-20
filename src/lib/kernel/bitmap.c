@@ -2,9 +2,9 @@
  * 位图的实现与操作
  */
 
-#include <sys/bitmap.h>
+#include <bitmap.h>
 #include <string.h>
-#include <sys/debug.h>
+#include <debug.h>
 
 /* 将位图bmp初始化 */
 void bitmap_init(bitmap *bmp)

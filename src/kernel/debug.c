@@ -2,9 +2,9 @@
  * 定义内核调试用的函数
  */
 
-#include <sys/debug.h>
-#include <sys/kernel.h>
-#include <sys/interrupt.h>
+#include <debug.h>
+#include <kernel.h>
+#include <interrupt.h>
 
 /* 关中断，打印文件名、行号、函数名、条件，并让程序悬停 */
 void panic(const char *filename, int line, const char *func_name,

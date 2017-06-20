@@ -3,12 +3,12 @@
  */
 
 #include <stddef.h>
-#include <sys/print.h>
-#include <sys/init.h>
+#include <print.h>
+#include <init.h>
 #include <string.h>
-#include <sys/kernel.h>
-#include <sys/debug.h>
-#include <sys/memory.h>
+#include <kernel.h>
+#include <debug.h>
+#include <memory.h>
 
 int main(void)
 {

@@ -3,10 +3,10 @@
  */
 
 #include <stdint.h>
-#include <sys/global.h>
-#include <sys/interrupt.h>
-#include <sys/io.h>
-#include <sys/print.h>
+#include <global.h>
+#include <interrupt.h>
+#include <io.h>
+#include <print.h>
 
 /* 这里用的可编程中断控制器是8259A */
 #define PIC_M_CTRL  0x20    /* 主片的控制端口是0x20 */

@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/memory.h>
-#include <sys/kernel.h>
-#include <sys/bitmap.h>
-#include <sys/debug.h>
+#include <memory.h>
+#include <kernel.h>
+#include <bitmap.h>
+#include <debug.h>
 
 /* 获取虚拟地址的高10位，即pde索引部分 */
 #define PDE_IDX(addr)   ((addr & 0xffc00000) >> 22)

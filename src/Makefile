@@ -10,10 +10,12 @@ BUILD_DIR = ./build
 OBJS_DIR  = ${BUILD_DIR}
 BOCHS_PATH =/root/tools/bochs
 
-INC_DIR	:= ${TOP_DIR}/include
+INC_DIR	:= -I${TOP_DIR}/include
+INC_DIR	+= -I${TOP_DIR}/include/kernel
+INC_DIR	+= -I${TOP_DIR}/include/dev
 
 ASFLAGS := -f elf
-CFLAGS  := -Wall -I ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
+CFLAGS  := -Wall ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
 		   -Wmissing-prototypes
 LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
