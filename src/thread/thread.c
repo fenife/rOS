@@ -5,10 +5,36 @@
 #include <stdint.h>
 #include <string.h>
 #include <memory.h>
+#include <interrupt.h>
+#include <debug.h>
+
+struct task_struct * main_thread;       /* 主线程PCB */
+struct list list_ready_thread;          /* 就绪队列 */
+struct list list_all_thread;            /* 所有任务队列 */
+static struct node * pthread_tag;        /* 用于保存队列中的线程结点 */
+
+
+/* 获取当前进程的PCB指针，即PCB页表基址 
+ *
+ * 各个线程所用的0级栈都是在自己的PCB当中，因此取当前栈指针
+ * (esp)的高20位即PCB所在页表的基址，亦即PCB的起始地址
+ */
+struct task_struct * running_thread(void)
+{
+    uint32_t esp;
+
+    asm volatile ("mov %%esp, %0" : "=g"(esp));
+    return (struct task_struct *)(esp & 0xfffff000);
+}
 
 /* 由kernel_thread去执行function(func_arg) */
 static void kernel_thread(thread_func *func, void *func_arg)
 {
+    /* 执行function前要开中断，避免后面的时钟中断被屏蔽，
+     * 而无法调度其它线程
+     */
+    intr_disable();
+    
     func(func_arg);
 }
 
@@ -40,13 +66,30 @@ void thread_init(task_struct * pthread, char * name, int pri)
 {
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
-    pthread->status     = TASK_RUNNINT;
-    pthread->priority   = pri;
+
+    /* 由于把main函数也封装成一个线程，并且它一直是运行的，
+     * 故将其状态直接设为TASK_RUNNING
+     */
+    if (pthread == main_thread)
+    {
+        pthread->status = TASK_RUNNINT;
+    }   
+    else 
+    {
+        pthread->status = TASK_READY;
+    }
 
     /* self_kstack是线程自己在内核态下使用的栈顶地址 
      * 初始化为PCB页的顶端
      */
     pthread->self_kstack = (uint32_t *)((uint32_t)pthread + PG_SIZE);
+    pthread->priority    = pri;
+
+    /* 任务运行时间由优先级决定，优先级越高，ticks越大 */
+    pthread->ticks       = pri;
+    
+    pthread->elapsed_ticks = 0;
+    pthread->pgdir       = NULL;
     pthread->stack_magic = STACK_BORDER_MAGIC;
 }
 
@@ -65,15 +108,35 @@ struct task_struct * thread_start(char * name, int pri,
     thread_init(pthread, name, pri);
     thread_create(pthread, func, func_arg);
 
-    asm volatile ("movl %0, %%esp;  \
-            pop %%ebp; pop %%ebx;   \
-            pop %%edi; pop %%esi; ret" \
-            : : "g"(pthread->self_kstack) \
-            : "memory");
+    /* 加入就绪线程队列，并确保此队列之前并没有此线程 */
+    kassert(!find_elem(&list_ready_thread, &pthread->general_tag));
+    list_append(&list_ready_thread, &pthread->general_tag);
 
+    /* 加入全部线程队列，并确保此队列之前并没有此线程 */
+    kassert(!find_elem(&list_all_thread, &pthread->general_tag));
+    list_append(&list_all_thread, &pthread->general_tag);
+    
     return pthread;
 }
 
+/* 将kernel中的main函数完善为主线程 */
+static void make_main_thread(void)
+{
+    /* 因为main线程早已运行，在loader.S中进入内核时有
+     * mov esp,0xc009f000，此时已为其预留了tcb，地址
+     * 为0xc009e000，因此不需要通过get_kernel_page另分配一页
+     */
+    main_thread = running_thread();
+    thread_init(main_thread, "main", 31);
 
+    /* main函数是当前线程,当前线程不在thread_ready_list中，
+     * 所以只将其加在list_all_thread中
+     */
+    kassert(!find_elem(&list_all_thread, &main_thread->all_list_tag));
+    list_append(&list_all_thread, &main_thread->all_list_tag);
+}
+
+
+            
 
 

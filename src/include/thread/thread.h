@@ -4,6 +4,7 @@
 #define __THREAD_THREAD_H
 
 #include <stdint.h>
+#include <list.h>
 
 /* 下面的魔数作为栈的边界标记，用于检测栈的溢出 */
 #define STACK_BORDER_MAGIC  0x20170620
@@ -81,6 +82,18 @@ typedef struct task_struct{
     task_status status;
     uint8_t priority;       /* 线程优先级 */
     char name[16];
+    uint8_t ticks;          /* 每次在处理器上执行的时间嘀嗒数 */
+    uint32_t elapsed_ticks; /* 此任务执行了多久 */
+
+    /* general_tag的作用是用于线程在一般的队列中的结点 */
+    struct node general_tag;
+
+    /* all_list_tag的作用是用于全部线程队列中的结点 */
+    struct node all_list_tag;
+
+    /* 进程自己页表的虚拟地址，如果 是线程，则为NULL */
+    uint32_t * pgdir;         
+    
     uint32_t stack_magic;   /* 用这串数字做栈的边界标记，用于检测栈的溢出 */
 } task_struct;
 
@@ -89,5 +102,7 @@ void thread_create(task_struct * pthread, thread_func func,
 void thread_init(task_struct * pthread, char *name, int pri);
 struct task_struct * thread_start(char *name, int pri, 
         thread_func func, void * func_arg);
+
+extern void switch_to(struct task_struct * cur, struct task_struct *next);
             
 #endif  /* __THREAD_THREAD_H */

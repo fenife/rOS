@@ -16,7 +16,7 @@
 
 /* 用于获取中断状态 */
 /* 开中断时eflags寄存器的if位为1 */
-#define EFLAGES_IF  0x00000200
+#define EFLAGS_IF  0x00000200
 
 /* 获取eflags寄存器的值，保存在变量var中，
  * 寄存器约束 g 表示var可以放到内存或寄存器中
@@ -226,5 +226,5 @@ intr_status intr_get_status(void)
     uint32_t eflags = 0;
 
     GET_EFALGS(eflags);
-    return (EFLAGES_IF & eflags) ? INTR_ON : INTR_OFF;
+    return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
