@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <memory.h>
-#include <kernel.h>
+#include <printk.h>
 #include <bitmap.h>
 #include <debug.h>
 

@@ -3,7 +3,7 @@
  */
 
 #include <stddef.h>
-#include <kernel.h>
+#include <printk.h>
 #include <init.h>
 #include <thread.h>
 #include <interrupt.h>

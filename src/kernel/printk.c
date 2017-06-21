@@ -4,7 +4,7 @@
 
 #include <stdarg.h>
 #include <print.h>
-#include <kernel.h>
+#include <printk.h>
 
 static char buf[1024];
 

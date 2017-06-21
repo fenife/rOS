@@ -3,7 +3,7 @@
  */
 
 #include <debug.h>
-#include <kernel.h>
+#include <printk.h>
 #include <interrupt.h>
 
 /* 关中断，打印文件名、行号、函数名、条件，并让程序悬停 */
