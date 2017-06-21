@@ -35,7 +35,7 @@ void list_remove(struct node * pelem);
 void list_push(struct list *plist, struct node * elem);
 struct node * list_pop(struct list * plist);
 void list_append(struct list * plist, struct node * elem);
-bool find_elem(struct list *plist, struct node * target);
+bool elem_find(struct list *plist, struct node * target);
 struct node * list_traversal(struct list * plist, 
             check_elem check, int cond);
 uint32_t list_len(struct list *plist);

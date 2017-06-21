@@ -69,7 +69,7 @@ void list_append(struct list * plist, struct node * elem)
 /* 从链表中查找结点元素target，
  * 成功时返回true，失败时返回false
  */
-bool find_elem(struct list *plist, struct node * target)
+bool elem_find(struct list *plist, struct node * target)
 {
     struct node * pelem = plist->head.next;
 

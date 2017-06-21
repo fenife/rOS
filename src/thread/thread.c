@@ -110,11 +110,11 @@ struct task_struct * thread_start(char * name, int pri,
     thread_create(pthread, func, func_arg);
 
     /* 加入就绪线程队列，并确保此队列之前并没有此线程 */
-    kassert(!find_elem(&thread_ready_list, &pthread->general_tag));
+    kassert(!elem_find(&thread_ready_list, &pthread->general_tag));
     list_append(&thread_ready_list, &pthread->general_tag);
 
     /* 加入全部线程队列，并确保此队列之前并没有此线程 */
-    kassert(!find_elem(&thread_all_list, &pthread->all_list_tag));
+    kassert(!elem_find(&thread_all_list, &pthread->all_list_tag));
     list_append(&thread_all_list, &pthread->all_list_tag);
     
     return pthread;
@@ -133,7 +133,7 @@ static void make_main_thread(void)
     /* main函数是当前线程,当前线程不在thread_ready_list中，
      * 所以只将其加在thread_all_list中
      */
-    kassert(!find_elem(&thread_all_list, &main_thread->all_list_tag));
+    kassert(!elem_find(&thread_all_list, &main_thread->all_list_tag));
     list_append(&thread_all_list, &main_thread->all_list_tag);
 }
 
@@ -147,7 +147,7 @@ void schedule(void)
     /* 若此线程只是cpu时间片到了，将其加入到就绪队列尾 */
     if (TASK_RUNNING == cur->status)
     {
-        kassert(!find_elem(&thread_ready_list, &cur->general_tag));
+        kassert(!elem_find(&thread_ready_list, &cur->general_tag));
         list_append(&thread_ready_list, &cur->general_tag);
         
         /* 重新将当前线程的ticks再重置为其priority */
@@ -173,6 +173,49 @@ void schedule(void)
             general_tag, thread_tag);
     next->status = TASK_RUNNING;
     switch_to(cur, next);
+}
+
+/* 当前进程主动将自己阻塞，标志其状态为stat */
+void thread_block(task_status stat)
+{
+    /* stat取值为TASK_BLOCKED、TASK_WAITING、TASK_HANGING之一，
+     * 也就是只有这三种状态才不会被调度
+     */
+    kassert(TASK_BLOCKED == stat || TASK_WAITING == stat 
+            || TASK_HANGING == stat);
+    
+    intr_status old_status = intr_disable();
+    struct task_struct * cur_thread = running_thread();
+    cur_thread->status = stat;  /* 置其状态为stat */
+
+    /* 将当前线程换下处理器，重新调度下一个任务 */
+    schedule();     
+
+    /* 待当前线程被解除阻塞后才继续运行下面的intr_set_status */
+    intr_set_status(old_status);
+}
+
+/* 将线程pthread解除阻塞 */
+void thread_unblock(struct task_struct * pthread)
+{
+    intr_status old_status = intr_disable();
+
+    kassert(TASK_BLOCKED == pthread->status || TASK_WAITING == pthread->status 
+            || TASK_HANGING == pthread->status);
+
+    if (pthread->status != TASK_READY) 
+    {
+        kassert(!elem_find(&thread_ready_list, &pthread->general_tag));
+        if (elem_find(&thread_ready_list, &pthread->general_tag))
+        {
+            PANIC("thread_unblock: blocked thread in ready_list\n");
+        }
+
+        /* 放到队列的最前面，使其尽快得到调度 */
+        list_push(&thread_ready_list, &pthread->general_tag);
+        pthread->status = TASK_READY;
+    }
+    intr_set_status(old_status);
 }
 
 /* 初始化线程环境 */

@@ -105,6 +105,9 @@ struct task_struct * thread_start(char *name, int pri,
 struct task_struct * running_thread(void);
 void schedule(void);
 void thread_init(void);
+void thread_block(task_status stat);
+void thread_unblock(struct task_struct * pthread);
+
 
 extern void switch_to(struct task_struct * cur, struct task_struct *next);
             
