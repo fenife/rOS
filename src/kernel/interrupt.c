@@ -132,7 +132,12 @@ static void general_intr_handler(uint8_t vec_nr)
     }
 
     printk("-------    exception message end    -------\n");
-    
+
+    /* 能进入中断处理程序就表示已经处在关中断情况下，
+     * 不会出现调度进程的情况。故下面的死循环不会再被中断
+     */
+    while(1)
+        ;
 }
 
 /* 完成一般中断处理函数注册及异常名称注册 */

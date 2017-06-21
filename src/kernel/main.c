@@ -24,7 +24,7 @@ int main(void)
 
     while (1)
     {
-        printk("main - ");
+        printk("main ");
     }
 
     return 0;
@@ -40,7 +40,7 @@ void k_thread_a(void *arg)
 
     while(1)
     {
-        printk("%s -", para);
+        printk("%s ", para);
     }
 }
 
@@ -50,7 +50,7 @@ void k_thread_b(void *arg)
 
     while(1)
     {
-        printk("%s - ", para);
+        printk("%s ", para);
     }
 }
 
