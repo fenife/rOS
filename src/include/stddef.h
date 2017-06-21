@@ -26,14 +26,14 @@ typedef unsigned int    size_t;
  * @ptr:	the pointer to the member.
  */
 
-/* 
 #define container_of(type, member, ptr) ({			\
 	const typeof(((type *)0)->member) * __mptr = (ptr);	\
 	(type *)((char *)__mptr - offsetof(type, member)); })
-*/
 
-/* 也可以这样定义 */
+
+/* 也可以这样定义 
 #define container_of(type, member, ptr) \
     (type *)((size_t)ptr - offsetof(type, member))
+ */
  
 #endif  /* __LIB_STDDEF_H */

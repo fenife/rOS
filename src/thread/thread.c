@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <interrupt.h>
 #include <debug.h>
+#include <kernel.h>
 
 struct task_struct * main_thread;       /* 主线程PCB */
 struct list list_ready_thread;          /* 就绪队列 */
@@ -33,7 +34,7 @@ static void kernel_thread(thread_func *func, void *func_arg)
     /* 执行function前要开中断，避免后面的时钟中断被屏蔽，
      * 而无法调度其它线程
      */
-    intr_disable();
+    intr_enable();
     
     func(func_arg);
 }
@@ -62,7 +63,7 @@ void thread_create(struct task_struct * pthread, thread_func func,
 }
 
 /* 初始化线程基本信息 */
-void thread_init(task_struct * pthread, char * name, int pri)                
+void init_thread(task_struct * pthread, char * name, int pri)                
 {
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
@@ -72,7 +73,7 @@ void thread_init(task_struct * pthread, char * name, int pri)
      */
     if (pthread == main_thread)
     {
-        pthread->status = TASK_RUNNINT;
+        pthread->status = TASK_RUNNING;
     }   
     else 
     {
@@ -105,7 +106,7 @@ struct task_struct * thread_start(char * name, int pri,
      */
     struct task_struct * pthread = get_kernel_pages(1);
 
-    thread_init(pthread, name, pri);
+    init_thread(pthread, name, pri);
     thread_create(pthread, func, func_arg);
 
     /* 加入就绪线程队列，并确保此队列之前并没有此线程 */
@@ -127,7 +128,7 @@ static void make_main_thread(void)
      * 为0xc009e000，因此不需要通过get_kernel_page另分配一页
      */
     main_thread = running_thread();
-    thread_init(main_thread, "main", 31);
+    init_thread(main_thread, "main", 31);
 
     /* main函数是当前线程,当前线程不在thread_ready_list中，
      * 所以只将其加在list_all_thread中
@@ -136,7 +137,53 @@ static void make_main_thread(void)
     list_append(&list_all_thread, &main_thread->all_list_tag);
 }
 
+/* 实现任务调度 */
+void schedule(void)
+{
+    kassert( INTR_OFF == intr_get_status());
 
-            
+    struct task_struct * cur = running_thread();
+    
+    /* 若此线程只是cpu时间片到了，将其加入到就绪队列尾 */
+    if (TASK_RUNNING == cur->status)
+    {
+        kassert(!find_elem(&list_ready_thread, &cur->general_tag));
+        list_append(&list_ready_thread, &cur->general_tag);
+        
+        /* 重新将当前线程的ticks再重置为其priority */
+        cur->ticks = cur->priority;
+        
+        cur->status = TASK_READY;
+    }
+    else
+    {
+        /* 若此线程需要某事件发生后才能继续上cpu运行，
+         * 不需要将其加入队列，因为当前线程不在就绪队列中
+         */
+    }
 
+    kassert(!list_empty(&list_ready_thread));
+    pthread_tag = NULL;  
+
+    /* 将list_ready_thread队列中的第一个就绪线程弹出，
+     * 准备将其调度上cpu 
+     */
+    pthread_tag = list_pop(&list_ready_thread);
+    struct task_struct * next = container_of(struct task_struct, 
+            general_tag, pthread_tag);
+    next->status = TASK_RUNNING;
+    switch_to(cur, next);
+}
+
+/* 初始化线程环境 */
+void thread_init(void)
+{
+    printk("thread_init start ... \n");
+    list_init(&list_ready_thread);
+    list_init(&list_all_thread);
+
+    /* 将当前main函数创建为线程 */
+    make_main_thread();
+    printk("thread_init done\n");
+}
 

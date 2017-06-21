@@ -6,8 +6,10 @@
 #include <kernel.h>
 #include <init.h>
 #include <thread.h>
+#include <interrupt.h>
 
 void k_thread_a(void *arg);
+void k_thread_b(void *arg);
 
 
 int main(void)
@@ -16,9 +18,14 @@ int main(void)
     init_all();     /* 初始化所有模块 */
 
     thread_start("k_thread_a", 31, k_thread_a, "arg_a");
+    thread_start("k_thread_b", 8, k_thread_b, "arg_b");
+
+    intr_enable();
 
     while (1)
-        ;
+    {
+        printk("main - ");
+    }
 
     return 0;
 }
@@ -33,6 +40,17 @@ void k_thread_a(void *arg)
 
     while(1)
     {
-        printk("%s \n", para);
+        printk("%s -", para);
     }
 }
+
+void k_thread_b(void *arg)
+{
+    char *para = (char *)arg;
+
+    while(1)
+    {
+        printk("%s - ", para);
+    }
+}
+

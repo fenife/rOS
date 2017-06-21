@@ -14,11 +14,11 @@ typedef void thread_func(void *);
 
 /* 进程或线程的状态 */
 typedef enum {
-    TASK_RUNNINT = 0,
+    TASK_RUNNING = 0,
     TASK_READY,
     TASK_BLOCKED,
     TASK_WAITING,
-    TASK_HANDING,
+    TASK_HANGING,
     TASK_DIED
 } task_status;
 
@@ -80,8 +80,8 @@ typedef struct thread_stack {
 typedef struct task_struct{
     uint32_t * self_kstack; /* 各内核线程都用自己的内核栈 */
     task_status status;
-    uint8_t priority;       /* 线程优先级 */
     char name[16];
+    uint8_t priority;       /* 线程优先级 */
     uint8_t ticks;          /* 每次在处理器上执行的时间嘀嗒数 */
     uint32_t elapsed_ticks; /* 此任务执行了多久 */
 
@@ -99,9 +99,12 @@ typedef struct task_struct{
 
 void thread_create(task_struct * pthread, thread_func func,
             void * func_arg);
-void thread_init(task_struct * pthread, char *name, int pri);
+void init_thread(task_struct * pthread, char *name, int pri);
 struct task_struct * thread_start(char *name, int pri, 
         thread_func func, void * func_arg);
+struct task_struct * running_thread(void);
+void schedule(void);
+void thread_init(void);
 
 extern void switch_to(struct task_struct * cur, struct task_struct *next);
             

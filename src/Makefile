@@ -24,7 +24,7 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/timer.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/print.o \
 		${OBJS_DIR}/debug.o ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o \
 		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
-		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o
+		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o	${OBJS_DIR}/switch.o \
 
 all : build rhd
 
@@ -76,6 +76,9 @@ ${OBJS_DIR}/print.o : ${TOP_DIR}/lib/kernel/print.S
 	${AS} ${ASFLAGS} $< -o $@
 
 ${OBJS_DIR}/intr_entry.o : ${TOP_DIR}/kernel/intr_entry.S
+	${AS} ${ASFLAGS} $< -o $@
+
+${OBJS_DIR}/switch.o : ${TOP_DIR}/thread/switch.S
 	${AS} ${ASFLAGS} $< -o $@
 
 ##############    链接所有目标文件    #############

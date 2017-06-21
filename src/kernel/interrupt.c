@@ -7,6 +7,7 @@
 #include <interrupt.h>
 #include <io.h>
 #include <print.h>
+#include <kernel.h>
 
 /* 这里用的可编程中断控制器是8259A */
 #define PIC_M_CTRL  0x20    /* 主片的控制端口是0x20 */
@@ -91,7 +92,7 @@ static void idt_desc_init(void)
     for (i = 0; i < IDT_DESC_CNT; i++)
     {
         create_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0,
-                    (intr_handler)intr_entry_table[i]);
+                    intr_entry_table[i]);
     }
 
     put_str("   idt_desc_init done\n");
@@ -106,9 +107,32 @@ static void general_intr_handler(uint8_t vec_nr)
     if (0x27 == vec_nr || 0x2f == vec_nr)
         return;
 
-    put_str("int vector: 0x");
-    put_int(vec_nr);
-    put_char('\n');
+    /* 将光标置为0，从屏幕左上角清出一片打印异常信息的区域，方便阅读 */
+    set_cursor(0);
+    int cursor_pos = 0;
+    while(cursor_pos < 320)
+    {
+        printk(" ");
+        cursor_pos++;
+    }
+
+    set_cursor(0);      /* 重置光标为屏幕左上角 */
+    printk("-------    exception message begin    -------\n");
+    set_cursor(88);     /* 从第2行第8个字符开始打印 */
+    printk("%s\n", intr_name[vec_nr]);
+
+    /* 若为Pagefault，将缺失的虚拟地址打印出来并悬停 */
+    if (14 == vec_nr)
+    {
+        int page_fault_vaddr = 0;
+
+        /* cr2中存放造成page_fault的地址 */
+        asm ("movl %%cr2, %0" : "=r"(page_fault_vaddr));
+        printk("page fault vaddr is: 0x%x\n", page_fault_vaddr);
+    }
+
+    printk("-------    exception message end    -------\n");
+    
 }
 
 /* 完成一般中断处理函数注册及异常名称注册 */
@@ -227,4 +251,13 @@ intr_status intr_get_status(void)
 
     GET_EFALGS(eflags);
     return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
+}
+
+/* 在中断处理程序数组第vec_no个元素中注册安装中断处理程序 */
+void register_handler(uint8_t vec_no, intr_handler func)
+{
+    /* intr_handler_table数组中的函数是在进入中断后根据中断向量号调用的，
+     * 见kernel/kernel.S的call [idt_table + %1*4]   
+     */
+    intr_handler_table[vec_no] = func;
 }

@@ -51,5 +51,6 @@ intr_status intr_get_status(void);
 intr_status intr_set_status(intr_status status);
 intr_status intr_enable(void);
 intr_status intr_disable(void);
+void register_handler(uint8_t vec_no, intr_handler func);
 
 #endif  /* __KERNEL_INTERRUPT_H */
