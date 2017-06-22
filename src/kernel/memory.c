@@ -9,6 +9,7 @@
 #include <printk.h>
 #include <bitmap.h>
 #include <debug.h>
+#include <print.h>
 
 /* 获取虚拟地址的高10位，即pde索引部分 */
 #define PDE_IDX(addr)   ((addr & 0xffc00000) >> 22)
@@ -204,7 +205,7 @@ void * get_kernel_pages(uint32_t pg_need)
 /* 根据内存容量的大小初始化物理内存池的相关结构 */
 static void mem_pool_init(uint32_t all_mem)
 {
-    printk("   mem_pool_init statr  ... \n");
+    put_str("   mem_pool_init statr  ... \n");
 
     /* 页表大小 = 1页的页目录表 + 第0和第768个页目录项指向同一个页表
      *          + 第769~1022个页目录项共指向254个页表，共256个页框
@@ -296,13 +297,13 @@ static void mem_pool_init(uint32_t all_mem)
 
     bitmap_init(&kvm_pool.bm);
 
-    printk("   mem_pool_init done\n");
+    put_str("   mem_pool_init done\n");
 }
 
 /* 内存管理部分初始化入口 */
 void mem_init(void)
 {
-    printk("mem_init start ... \n");
+    put_str("mem_init start ... \n");
 
     /* 在loader.S中，用BIOS中的三种方式获取了总的物理内存容量，
      * 其值存放在地址0xb00开始处，这里把它取出来
@@ -311,5 +312,5 @@ void mem_init(void)
 
     mem_pool_init(mem_bytes_total); /* 初始化物理内存池 */
 
-    printk("mem_init done\n");
+    put_str("mem_init done\n");
 }

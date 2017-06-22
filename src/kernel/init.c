@@ -14,11 +14,12 @@
 void init_all(void)
 {
     put_str("init_all start ... \n");
+
+    console_init(); /* 初始化控制台 */
     idt_init();     /* 初始化中断 */
     mem_init();     /* 初始化内存管理系统 */
-    thread_init();  /* 初始化线程相关结构 */
     timer_init();   /* 初始化定时器/计数器，设置时钟中断频率 */
-    console_init(); /* 初始化控制台 */
+    thread_init();  /* 初始化线程相关结构 */
     
     put_str("init_all done.\n");
 }
