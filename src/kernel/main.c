@@ -7,6 +7,8 @@
 #include <init.h>
 #include <thread.h>
 #include <interrupt.h>
+#include <console.h>
+#include <print.h>
 
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
@@ -14,19 +16,17 @@ void k_thread_b(void *arg);
 
 int main(void)
 {
-    printk("start kernel ... \n");
+    put_str("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
-    thread_start("k_thread_a", 31, k_thread_a, "arg_a");
-    thread_start("k_thread_b", 8, k_thread_b, "arg_b");
+    thread_start("k_thread_a", 31, k_thread_a, "Arga ");
+    thread_start("k_thread_b", 8, k_thread_b, "Argb ");
 
     intr_enable();
 
     while (1)
     {
-        intr_disable();
-        printk("main ");
-        intr_enable();
+        printk("Main ");
     }
 
     return 0;
@@ -42,9 +42,7 @@ void k_thread_a(void *arg)
 
     while(1)
     {
-        intr_disable();
-        printk("%s ", para);
-        intr_enable();
+        printk(para);
     }
 }
 
@@ -54,8 +52,6 @@ void k_thread_b(void *arg)
 
     while(1)
     {
-        intr_disable();
-        printk("%s ", para);
-        intr_enable();
+        printk(para);
     }
 }
