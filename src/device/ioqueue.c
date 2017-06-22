@@ -32,7 +32,7 @@ bool ioq_full(struct ioqueue * ioq)
 }
 
 /* 判断队列是否为空 */
-static bool ioq_empty(struct ioqueue * ioq)
+bool ioq_empty(struct ioqueue * ioq)
 {
     kassert(intr_get_status() == INTR_OFF);
     return ioq->head == ioq->tail;

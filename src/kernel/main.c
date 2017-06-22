@@ -10,6 +10,9 @@
 #include <console.h>
 #include <print.h>
 
+#include <ioqueue.h>
+#include <keyboard.h>
+
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
 
@@ -19,15 +22,13 @@ int main(void)
     put_str("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
-    //thread_start("k_thread_a", 31, k_thread_a, "Arga ");
-    //thread_start("k_thread_b", 8, k_thread_b, "Argb ");
+    thread_start("consumer_a", 31, k_thread_a, " A_");
+    thread_start("consumer_b", 31, k_thread_b, " B_");
 
     intr_enable();
 
     while (1)
-    {
-    //    printk("Main ");
-    }
+        ;
 
     return 0;
 }
@@ -38,20 +39,30 @@ int main(void)
  */
 void k_thread_a(void *arg)
 {
-    char *para = (char *)arg;
-
     while(1)
     {
-        printk(para);
+        intr_status old_status = intr_disable();
+        if (!ioq_empty(&kbd_buf))
+        {
+            printk(arg);
+            char byte = ioq_getchar(&kbd_buf);
+            printk("%c", byte);
+        }
+        intr_set_status(old_status);
     }
 }
 
 void k_thread_b(void *arg)
 {
-    char *para = (char *)arg;
-
     while(1)
     {
-        printk(para);
+        intr_status old_status = intr_disable();
+        if (!ioq_empty(&kbd_buf))
+        {
+            printk(arg);
+            char byte = ioq_getchar(&kbd_buf);
+            printk("%c", byte);
+        }
+        intr_set_status(old_status);
     }
 }
