@@ -8,6 +8,7 @@
 #include <printk.h>
 #include <stddef.h>
 #include <print.h>
+#include <ioqueue.h>
 
 #define KBD_BUF_PORT    0x60    /* 键盘buffer寄存器端口号为0x60 */
 
@@ -38,6 +39,8 @@
 #define ctrl_r_make     0xe01d
 #define ctrl_r_break    0xe09d
 #define caps_lock_make  0x3a
+
+struct ioqueue kbd_buf;     /* 定义键盘缓冲区 */
 
 /* 定义以下变量记录相应键是否按下的状态 */
 static bool ctrl_status, shift_status, alt_status, caps_lock_status;
@@ -230,7 +233,11 @@ static void intr_keyboard_handler(void)
         /* 只处理ascii码不为0的键 */
         if (cur_char)
         {
-            put_char(cur_char);
+            if (!ioq_full(&kbd_buf))
+            {
+                put_char(cur_char);
+                ioq_putchar(&kbd_buf, cur_char);
+            }
             return;
         }
 
@@ -246,7 +253,7 @@ static void intr_keyboard_handler(void)
         else if (scancode == alt_l_make || scancode == alt_r_make)
         {
             alt_status = true;
-        } 
+        }
         else if (scancode == caps_lock_make)
         {
             /* 不管之前是否有按下caps_lock键，当再次按下时则状态取反，
@@ -256,7 +263,7 @@ static void intr_keyboard_handler(void)
             caps_lock_status = !caps_lock_status;
         }
     }
-    else 
+    else
     {
         put_str("unknown key\n");
     }
@@ -266,6 +273,7 @@ static void intr_keyboard_handler(void)
 void keyboard_init(void)
 {
     put_str("keyboard_init start ...\n");
+    ioqueue_init(&kbd_buf);     /* 初始化环形缓冲区 */
     register_handler(0x21, intr_keyboard_handler);
     put_str("keyboard_init done\n");
 }
