@@ -25,7 +25,7 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/debug.o ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o \
 		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
 		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o	${OBJS_DIR}/switch.o \
-		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o
+		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o  ${OBJS_DIR}/keyboard.o
 
 all : build rhd
 
@@ -70,6 +70,9 @@ ${OBJS_DIR}/sync.o : ${TOP_DIR}/thread/sync.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/console.o : ${TOP_DIR}/device/console.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/keyboard.o : ${TOP_DIR}/device/keyboard.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############

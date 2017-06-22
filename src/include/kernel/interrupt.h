@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 /* 目前总共支持的中断数 */
-#define IDT_DESC_CNT    33
+#define IDT_DESC_CNT    0x30
 
 /* --------------   IDT描述符属性       ------------ */
 #define IDT_DESC_P      1

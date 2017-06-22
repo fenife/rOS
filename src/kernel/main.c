@@ -19,14 +19,14 @@ int main(void)
     put_str("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
-    thread_start("k_thread_a", 31, k_thread_a, "Arga ");
-    thread_start("k_thread_b", 8, k_thread_b, "Argb ");
+    //thread_start("k_thread_a", 31, k_thread_a, "Arga ");
+    //thread_start("k_thread_b", 8, k_thread_b, "Argb ");
 
     intr_enable();
 
     while (1)
     {
-        printk("Main ");
+    //    printk("Main ");
     }
 
     return 0;
