@@ -14,6 +14,7 @@ INC_DIR	:= -I${TOP_DIR}/include
 INC_DIR	+= -I${TOP_DIR}/include/kernel
 INC_DIR	+= -I${TOP_DIR}/include/dev
 INC_DIR	+= -I${TOP_DIR}/include/thread
+INC_DIR	+= -I${TOP_DIR}/include/user
 
 ASFLAGS := -f elf
 CFLAGS  := -Wall ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
@@ -26,7 +27,7 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
 		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o	${OBJS_DIR}/switch.o \
 		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o  ${OBJS_DIR}/keyboard.o \
-		${OBJS_DIR}/ioqueue.o 
+		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o
 
 all : build rhd
 
@@ -77,6 +78,9 @@ ${OBJS_DIR}/keyboard.o : ${TOP_DIR}/device/keyboard.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/ioqueue.o : ${TOP_DIR}/device/ioqueue.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/tss.o : ${TOP_DIR}/user/tss.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############
