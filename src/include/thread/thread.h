@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 #include <list.h>
+#include <memory.h>
+#include <bitmap.h>
 
 /* 下面的魔数作为栈的边界标记，用于检测栈的溢出 */
 #define STACK_BORDER_MAGIC  0x20170620
@@ -91,16 +93,21 @@ typedef struct task_struct{
     /* all_list_tag的作用是用于全部线程队列中的结点 */
     struct node all_list_tag;
 
-    /* 进程自己页表的虚拟地址，如果 是线程，则为NULL */
-    uint32_t * pgdir;         
-    
+    /* 进程自己页表的虚拟地址，如果是线程，则为NULL */
+    uint32_t * pgdir;
+
+    struct vm_pool user_vaddr;  /* 用户进程的虚拟地址空间 */
+
     uint32_t stack_magic;   /* 用这串数字做栈的边界标记，用于检测栈的溢出 */
 } task_struct;
+
+extern struct list thread_ready_list;
+extern struct list thread_all_list;
 
 void thread_create(task_struct * pthread, thread_func func,
             void * func_arg);
 void init_thread(task_struct * pthread, char *name, int pri);
-struct task_struct * thread_start(char *name, int pri, 
+struct task_struct * thread_start(char *name, int pri,
         thread_func func, void * func_arg);
 struct task_struct * running_thread(void);
 void schedule(void);
@@ -108,7 +115,6 @@ void thread_init(void);
 void thread_block(task_status stat);
 void thread_unblock(struct task_struct * pthread);
 
-
 extern void switch_to(struct task_struct * cur, struct task_struct *next);
-            
+
 #endif  /* __THREAD_THREAD_H */

@@ -8,6 +8,9 @@
 #include <interrupt.h>
 #include <debug.h>
 #include <printk.h>
+#include <process.h>
+#include <print.h>
+
 
 struct task_struct * main_thread;       /* 主线程PCB */
 struct list thread_ready_list;          /* 就绪队列 */
@@ -172,6 +175,10 @@ void schedule(void)
     struct task_struct * next = container_of(struct task_struct, 
             general_tag, thread_tag);
     next->status = TASK_RUNNING;
+
+    /* 击活任务页表等 */
+    process_activate(next);
+    
     switch_to(cur, next);
 }
 

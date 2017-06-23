@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <bitmap.h>
+#include <list.h>
 
 #define PG_SIZE     4096        /* 页的大小 */
 
@@ -45,24 +46,17 @@ typedef struct vm_pool {
     uint32_t vm_start; /* 虚拟地址的起始值，以后将以这个地址开始分配内存 */
 } vm_pool;
 
-
-/* physical memory pool
- * 物理内存池，用于管理实际物理上的内核内存池和用户内存池
- */
-typedef struct phm_pool {
-    bitmap bm;          /* 物理内存池的位图 */
-    uint32_t pm_start; /* 本内存池所管理物理内存的起始地址 */
-    uint32_t size;      /* 本内存池字节容量 */
-} phm_pool;
-
-extern vm_pool  kvm_pool;
-extern phm_pool kernel_pool;
-extern phm_pool user_pool;
+extern struct vm_pool  kvm_pool;
+extern struct phm_pool kernel_pool;
+extern struct phm_pool user_pool;
 
 void mem_init(void);
 uint32_t * get_pte(uint32_t vaddr);
 uint32_t * get_pde(uint32_t vaddr);
 void * get_kernel_pages(uint32_t pg_need);
 void * malloc_page(poolfg fg, uint32_t pg_need);
+uint32_t addr_v2p(uint32_t vaddr);
+void * get_a_page(poolfg pf, uint32_t vaddr);
+void * get_user_pages(uint32_t pg_cnt);
 
 #endif  /* __KERNEL_MEMORY_H */
