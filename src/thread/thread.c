@@ -43,7 +43,7 @@ static void kernel_thread(thread_func *func, void *func_arg)
 }
 
 /* 分配pid */
-static pit_t allocate_pid(void)
+static pid_t allocate_pid(void)
 {
     static pid_t next_pid = 0;
     lock_acquire(&pid_lock);
@@ -244,6 +244,7 @@ void thread_init(void)
     put_str("thread_init start ... \n");
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
+    lock_init(&pid_lock);
 
     /* 将当前main函数创建为线程 */
     make_main_thread();
