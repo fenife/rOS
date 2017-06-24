@@ -24,6 +24,7 @@
  */
 #define GET_EFALGS(var) asm volatile ("pushfl; popl %0" : "=g"(var))
 
+extern int32_t syscall_handler(void);
 
 static void create_idt_desc(struct intr_desc *desc,
         uint8_t attr, intr_handler handler);
@@ -88,12 +89,19 @@ static void create_idt_desc(struct intr_desc * desc,
 static void idt_desc_init(void)
 {
     int i;
+    int last_index = IDT_DESC_CNT - 1;
 
     for (i = 0; i < IDT_DESC_CNT; i++)
     {
         create_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0,
                     intr_entry_table[i]);
     }
+
+    /* 单独处理系统调用，系统调用对应的中断门dpl为3，
+     * 中断处理程序为单独的syscall_handler 
+     */
+    make_gdt_desc(&intr_handler_table[last_index], IDT_DESC_ATTR_DPL3, 
+                syscall_handler);
 
     put_str("   idt_desc_init done\n");
 }
