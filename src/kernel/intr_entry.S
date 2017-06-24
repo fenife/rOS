@@ -149,7 +149,7 @@ syscall_handler:
     call [syscall_table + eax * 4]
 
     ; 跨过上面系统调用的三个参数
-    addd esp, 12
+    add esp, 12
 
     ; 4.将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax

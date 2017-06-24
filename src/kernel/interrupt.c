@@ -61,7 +61,7 @@ static void pic_init(void)
     outb (PIC_S_DATA, 0x01);	/* ICW4: 8086模式，正常EOI */
 
     /* 只打开键盘中断、时钟中断 */
-    outb(PIC_M_DATA, 0xfc);
+   outb (PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
 
     put_str("   pic_init done\n");
@@ -100,8 +100,7 @@ static void idt_desc_init(void)
     /* 单独处理系统调用，系统调用对应的中断门dpl为3，
      * 中断处理程序为单独的syscall_handler 
      */
-    make_gdt_desc(&intr_handler_table[last_index], IDT_DESC_ATTR_DPL3, 
-                syscall_handler);
+    create_idt_desc(&idt[last_index], IDT_DESC_ATTR_DPL3, syscall_handler);
 
     put_str("   idt_desc_init done\n");
 }

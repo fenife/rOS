@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+/* 系统调用子功能号 */
 typedef enum SYSCALL_NR {
     SYS_GETPID = 0,
 }SYSCALL_NR;
