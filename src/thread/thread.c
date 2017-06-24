@@ -10,15 +10,15 @@
 #include <printk.h>
 #include <process.h>
 #include <print.h>
-
+#include <sync.h>
 
 struct task_struct * main_thread;       /* 主线程PCB */
 struct list thread_ready_list;          /* 就绪队列 */
 struct list thread_all_list;            /* 所有任务队列 */
+struct lock pid_lock;                   /* 分配pid锁 */
 static struct node * thread_tag;        /* 用于保存队列中的线程结点 */
 
-
-/* 获取当前进程的PCB指针，即PCB页表基址 
+/* 获取当前进程的PCB指针，即PCB页表基址
  *
  * 各个线程所用的0级栈都是在自己的PCB当中，因此取当前栈指针
  * (esp)的高20位即PCB所在页表的基址，亦即PCB的起始地址
@@ -38,9 +38,21 @@ static void kernel_thread(thread_func *func, void *func_arg)
      * 而无法调度其它线程
      */
     intr_enable();
-    
+
     func(func_arg);
 }
+
+/* 分配pid */
+static pit_t allocate_pid(void)
+{
+    static pid_t next_pid = 0;
+    lock_acquire(&pid_lock);
+    next_pid++;
+    lock_release(&pid_lock);
+
+    return next_pid;
+}
+
 
 /* 初始化线程栈thread_stack，将待执行的函数和参数放到thread_stack
  * 中相应的位置
@@ -66,9 +78,10 @@ void thread_create(struct task_struct * pthread, thread_func func,
 }
 
 /* 初始化线程基本信息 */
-void init_thread(task_struct * pthread, char * name, int pri)                
+void init_thread(task_struct * pthread, char * name, int pri)
 {
     memset(pthread, 0, sizeof(*pthread));
+    pthread->pid = allocate_pid();
     strcpy(pthread->name, name);
 
     /* 由于把main函数也封装成一个线程，并且它一直是运行的，
@@ -77,13 +90,13 @@ void init_thread(task_struct * pthread, char * name, int pri)
     if (pthread == main_thread)
     {
         pthread->status = TASK_RUNNING;
-    }   
-    else 
+    }
+    else
     {
         pthread->status = TASK_READY;
     }
 
-    /* self_kstack是线程自己在内核态下使用的栈顶地址 
+    /* self_kstack是线程自己在内核态下使用的栈顶地址
      * 初始化为PCB页的顶端
      */
     pthread->self_kstack = (uint32_t *)((uint32_t)pthread + PG_SIZE);
@@ -91,7 +104,7 @@ void init_thread(task_struct * pthread, char * name, int pri)
 
     /* 任务运行时间由优先级决定，优先级越高，ticks越大 */
     pthread->ticks       = pri;
-    
+
     pthread->elapsed_ticks = 0;
     pthread->pgdir       = NULL;
     pthread->stack_magic = STACK_BORDER_MAGIC;
@@ -101,10 +114,10 @@ void init_thread(task_struct * pthread, char * name, int pri)
  * 线程名为name，优先级为pri，
  * 线程所执行的函数是func(func_arg)
  */
-struct task_struct * thread_start(char * name, int pri, 
+struct task_struct * thread_start(char * name, int pri,
         thread_func func, void * func_arg)
 {
-    /* pcb都位于内核空间，包括用户进程的pcb也是在内核空间 
+    /* pcb都位于内核空间，包括用户进程的pcb也是在内核空间
      * 从内核空间中分配一页来存放pcb相关内容
      */
     struct task_struct * pthread = get_kernel_pages(1);
@@ -119,7 +132,7 @@ struct task_struct * thread_start(char * name, int pri,
     /* 加入全部线程队列，并确保此队列之前并没有此线程 */
     kassert(!elem_find(&thread_all_list, &pthread->all_list_tag));
     list_append(&thread_all_list, &pthread->all_list_tag);
-    
+
     return pthread;
 }
 
@@ -146,16 +159,16 @@ void schedule(void)
     kassert( INTR_OFF == intr_get_status());
 
     struct task_struct * cur = running_thread();
-    
+
     /* 若此线程只是cpu时间片到了，将其加入到就绪队列尾 */
     if (TASK_RUNNING == cur->status)
     {
         kassert(!elem_find(&thread_ready_list, &cur->general_tag));
         list_append(&thread_ready_list, &cur->general_tag);
-        
+
         /* 重新将当前线程的ticks再重置为其priority */
         cur->ticks = cur->priority;
-        
+
         cur->status = TASK_READY;
     }
     else
@@ -166,19 +179,19 @@ void schedule(void)
     }
 
     kassert(!list_empty(&thread_ready_list));
-    thread_tag = NULL;  
+    thread_tag = NULL;
 
     /* 将thread_ready_list队列中的第一个就绪线程弹出，
-     * 准备将其调度上cpu 
+     * 准备将其调度上cpu
      */
     thread_tag = list_pop(&thread_ready_list);
-    struct task_struct * next = container_of(struct task_struct, 
+    struct task_struct * next = container_of(struct task_struct,
             general_tag, thread_tag);
     next->status = TASK_RUNNING;
 
     /* 击活任务页表等 */
     process_activate(next);
-    
+
     switch_to(cur, next);
 }
 
@@ -188,15 +201,15 @@ void thread_block(task_status stat)
     /* stat取值为TASK_BLOCKED、TASK_WAITING、TASK_HANGING之一，
      * 也就是只有这三种状态才不会被调度
      */
-    kassert(TASK_BLOCKED == stat || TASK_WAITING == stat 
+    kassert(TASK_BLOCKED == stat || TASK_WAITING == stat
             || TASK_HANGING == stat);
-    
+
     intr_status old_status = intr_disable();
     struct task_struct * cur_thread = running_thread();
     cur_thread->status = stat;  /* 置其状态为stat */
 
     /* 将当前线程换下处理器，重新调度下一个任务 */
-    schedule();     
+    schedule();
 
     /* 待当前线程被解除阻塞后才继续运行下面的intr_set_status */
     intr_set_status(old_status);
@@ -207,10 +220,10 @@ void thread_unblock(struct task_struct * pthread)
 {
     intr_status old_status = intr_disable();
 
-    kassert(TASK_BLOCKED == pthread->status || TASK_WAITING == pthread->status 
+    kassert(TASK_BLOCKED == pthread->status || TASK_WAITING == pthread->status
             || TASK_HANGING == pthread->status);
 
-    if (pthread->status != TASK_READY) 
+    if (pthread->status != TASK_READY)
     {
         kassert(!elem_find(&thread_ready_list, &pthread->general_tag));
         if (elem_find(&thread_ready_list, &pthread->general_tag))
@@ -236,4 +249,3 @@ void thread_init(void)
     make_main_thread();
     put_str("thread_init done\n");
 }
-
