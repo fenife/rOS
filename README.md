@@ -15,6 +15,8 @@
     - `build`：编译后产生的目标文件等
     - `device`：设备代码
     - `include`：头文件
-    - `kernel`：核心代码
+    - `kernel`：内核代码
     - `lib`：库文件的实现代码
+    - `thread`：线程相关代码
+    - `user`：用户程序代码
 - `tools`：工具、配置
