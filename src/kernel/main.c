@@ -21,8 +21,6 @@ void k_thread_b(void *arg);
 void u_prog_a(void);
 void u_prog_b(void);
 
-int prog_a_pid = 0, prog_b_pid = 0;
-
 int main(void)
 {
     put_str("start kernel ... \n");
@@ -33,7 +31,7 @@ int main(void)
 
     intr_enable();
 
-    printk(" main_pid:0x%x\n", sys_getpid());
+    printk(" main_pid    : 0x%x\n", sys_getpid());
 
     thread_start("k_thread_a", 31, k_thread_a, "argA ");
     thread_start("k_thread_b", 31, k_thread_b, "argB ");
@@ -56,9 +54,7 @@ void k_thread_a(void *arg)
     //printk(" prog_a_pid  : 0x%x\n", prog_a_pid);
 
     while(1)
-    {
-        //printk(" v_a:0x%x", test_var_a);
-    }
+        ;
 }
 
 void k_thread_b(void *arg)
@@ -75,7 +71,8 @@ void k_thread_b(void *arg)
 /* 测试用户进程 */
 void u_prog_a(void)
 {
-    //printf(" prog_a_pid  : 0x%x\n", getpid());
+    printf(" prog_a_pid  : 0x%x\n", getpid());
+
     while(1)
         ;
 }
@@ -83,7 +80,8 @@ void u_prog_a(void)
 /* 测试用户进程 */
 void u_prog_b(void)
 {
-    //printf(" prog_b_pid  : 0x%x\n", getpid());
+    printf(" prog_b_pid  : 0x%x\n", getpid());
+
     while(1)
         ;
 }
