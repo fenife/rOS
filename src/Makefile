@@ -27,7 +27,8 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
 		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o	${OBJS_DIR}/switch.o \
 		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o  ${OBJS_DIR}/keyboard.o \
-		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o ${OBJS_DIR}/process.o
+		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o ${OBJS_DIR}/process.o	\
+		${OBJS_DIR}/syscall.o
 
 all : build rhd
 
@@ -84,6 +85,9 @@ ${OBJS_DIR}/tss.o : ${TOP_DIR}/user/tss.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/process.o : ${TOP_DIR}/user/process.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/syscall.o : ${TOP_DIR}/lib/user/syscall.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############
