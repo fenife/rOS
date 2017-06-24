@@ -76,6 +76,7 @@ void k_thread_b(void *arg)
 /* 测试用户进程 */
 void u_prog_a(void)
 {
+    write("write: u_prog_a\n");
     prog_a_pid = getpid();
     while(1)
     {
