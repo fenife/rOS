@@ -14,6 +14,7 @@
 #include <process.h>
 #include <syscall.h>
 #include <sys.h>
+#include <stdio.h>
 
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
@@ -52,7 +53,7 @@ void k_thread_a(void *arg)
     char * para =arg;
 
     printk(" thread_a_pid: 0x%x\n", sys_getpid());
-    printk(" prog_a_pid  : 0x%x\n", prog_a_pid);
+    //printk(" prog_a_pid  : 0x%x\n", prog_a_pid);
 
     while(1)
     {
@@ -65,37 +66,24 @@ void k_thread_b(void *arg)
     char * para =arg;
 
     printk(" thread_b_pid: 0x%x\n", sys_getpid());
-    printk(" prog_b_pid  : 0x%x\n", prog_b_pid);
+    //printk(" prog_b_pid  : 0x%x\n", prog_b_pid);
 
     while(1)
-    {
-        //printk(" v_b:0x%x", test_var_b);
-    }
+        ;
 }
 
 /* 测试用户进程 */
 void u_prog_a(void)
 {
-    prog_a_pid = getpid();
+    //printf(" prog_a_pid  : 0x%x\n", getpid());
     while(1)
-    {
-        //test_var_a++;
-    }
+        ;
 }
 
 /* 测试用户进程 */
 void u_prog_b(void)
 {
-    prog_b_pid = getpid();
+    //printf(" prog_b_pid  : 0x%x\n", getpid());
     while(1)
-    {
-        //test_var_b++;
-
-        /* 用户进程中暂时不能直接访问0特权级的显存段，
-         * 否则会抛出一般保护性异常
-         * 因此可以让上面的内核线程帮忙打印
-         */
-
-        /* printk(" v_b:0x%x", test_var_b); */
-    }
+        ;
 }

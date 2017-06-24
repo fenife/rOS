@@ -14,12 +14,13 @@ typedef char *va_list;
 #define  _AUPBND                (sizeof (s32) - 1)
 #define  _ADNBND                (sizeof (s32) - 1)
 
-/*
- * Variable argument list macro definitions
+/* 堆栈字节对齐（32位机下为4字节对齐）
+ * 计算类型为X的参数在栈中占据的字节数
+ * 向上4字节取整
  */
 #define _bnd(X, bnd)        (((sizeof (X)) + (bnd)) & (~(bnd)))
 
-/* 把ap指向第一个可变参数A */
+/* 把ap指向第一个可变参数 */
 #define va_start(ap, A)     (void) ((ap) = (((char *) &(A))     \
                                     + (_bnd (A, _AUPBND))))
 /* ap指向下一个参数并返回当前参数的值 */                                    

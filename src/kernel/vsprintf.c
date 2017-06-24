@@ -8,6 +8,8 @@
 
 #define is_digit(c)	((c) >= '0' && (c) <= '9')
 
+int vsprintf(char *buf, const char *fmt, va_list args);
+
 static int skip_atoi(const char **s)
 {
 	int i=0;

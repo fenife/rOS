@@ -21,14 +21,14 @@ CFLAGS  := -Wall ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
 		   -Wmissing-prototypes
 LDFLAGS := -Ttext ${ENTRY_POINT} -e main
 
-OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
-		${OBJS_DIR}/timer.o ${OBJS_DIR}/intr_entry.o ${OBJS_DIR}/print.o \
-		${OBJS_DIR}/debug.o ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o \
-		${OBJS_DIR}/printk.o ${OBJS_DIR}/vsprintf.o ${OBJS_DIR}/string.o \
-		${OBJS_DIR}/thread.o ${OBJS_DIR}/list.o	${OBJS_DIR}/switch.o \
-		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o  ${OBJS_DIR}/keyboard.o \
-		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o ${OBJS_DIR}/process.o	\
-		${OBJS_DIR}/syscall.o ${OBJS_DIR}/sys.o
+OBJS := ${OBJS_DIR}/main.o    ${OBJS_DIR}/init.o   ${OBJS_DIR}/interrupt.o 	\
+		${OBJS_DIR}/timer.o   ${OBJS_DIR}/print.o  ${OBJS_DIR}/intr_entry.o \
+		${OBJS_DIR}/debug.o   ${OBJS_DIR}/memory.o ${OBJS_DIR}/bitmap.o 	\
+		${OBJS_DIR}/printk.o  ${OBJS_DIR}/stdio.o  ${OBJS_DIR}/string.o 	\
+		${OBJS_DIR}/thread.o  ${OBJS_DIR}/list.o   ${OBJS_DIR}/switch.o 	\
+		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o   ${OBJS_DIR}/keyboard.o 	\
+		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o    ${OBJS_DIR}/process.o	\
+		${OBJS_DIR}/syscall.o ${OBJS_DIR}/sys.o    ${OBJS_DIR}/vsprintf.o 	\
 
 all : build rhd
 
@@ -92,7 +92,10 @@ ${OBJS_DIR}/syscall.o : ${TOP_DIR}/lib/user/syscall.c
 
 ${OBJS_DIR}/sys.o : ${TOP_DIR}/user/sys.c
 	${CC} ${CFLAGS} $< -o $@
-	
+
+${OBJS_DIR}/stdio.o : ${TOP_DIR}/lib/stdio.c
+	${CC} ${CFLAGS} $< -o $@
+
 ##############    汇编代码编译    ###############
 ${OBJS_DIR}/mbr.bin : ${TOP_DIR}/boot/mbr.S
 	${AS} -I ${TOP_DIR}/boot/ $< -o $@
