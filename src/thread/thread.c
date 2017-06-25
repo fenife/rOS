@@ -241,12 +241,12 @@ void thread_unblock(struct task_struct * pthread)
 /* 初始化线程环境 */
 void thread_init(void)
 {
-    put_str("thread_init start ... \n");
+    put_str("thread_init ... ");
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
     lock_init(&pid_lock);
 
     /* 将当前main函数创建为线程 */
     make_main_thread();
-    put_str("thread_init done\n");
+    put_str("ok\n");
 }
