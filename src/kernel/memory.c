@@ -519,7 +519,7 @@ void mfree_page(poolfg pf, void * _vaddr, uint32_t pg_cnt)
     uint32_t vaddr = (int32_t)_vaddr;
     uint32_t page_cnt = 0;
 
-    kassert(pg_cnt > 1 && (vaddr % PG_SIZE == 0));
+    kassert(pg_cnt >= 1 && (vaddr % PG_SIZE == 0));
     pg_phy_addr = addr_v2p(vaddr);  /* 获取虚拟地址vaddr对应的物理地址 */
 
     /* 确保待释放的物理内存在低端1M+1k大小的页目录+1k大小的页表地址范围外 */
@@ -578,6 +578,75 @@ void mfree_page(poolfg pf, void * _vaddr, uint32_t pg_cnt)
         vaddr_remove(pf, _vaddr, pg_cnt);
     }
 }
+
+/* 回收ptr所指向的内存 */
+void sys_free(void * ptr)
+{
+    kassert(ptr != NULL);
+
+    if (ptr == NULL)
+        return;
+
+    poolfg pf;
+    struct phm_pool * mem_pool;
+
+    /* 判断是线程还是进程 */
+    if (running_thread()->pgdir == NULL)    
+    {
+        /* 是线程，内核内存空间 */
+        kassert((uint32_t)ptr >= K_HEAP_START);
+
+        pf = PF_KERNEL;
+        mem_pool = &kernel_pool;
+    }
+    else
+    {
+        /* 是进程，用户内存空间 */
+        pf = PF_USER;
+        mem_pool = &user_pool;
+    }
+
+    lock_acquire(&mem_pool->lock);
+
+    struct mem_block * b = ptr;
+    
+    /* 把mem_block转换成arena，获取元信息 */
+    struct arena * a = block2arena(b);
+    
+    kassert(a->large == 0 || a->large == 1);
+
+    if (a->desc == NULL && a->large == true)
+    {
+        /* 大于1024字节的内存 */
+        mfree_page(pf, a, a->cnt);
+    }
+    else    /* 小于等于1024的内存块 */
+    {
+        /* 先将内存块回收到free_list */
+        list_append(&a->desc->free_list, &b->free_elem);
+        a->cnt++;
+        
+        /* 再判断此arena中的内存块是否都是空闲，如果是就释放此arena */
+        if (a->cnt == a->desc->blocks)
+        {
+            uint32_t block_idx;
+
+            /* 将此arena中的所有内存块从内存描述符的free_list中去掉 */
+            for (block_idx = 0; block_idx < a->desc->blocks; block_idx++)
+            {
+                struct mem_block * b = arena2block(a, block_idx);
+                kassert(elem_find(&a->desc->free_list, &b->free_elem));
+                list_remove(&b->free_elem);
+            }
+            
+            /* 释放此arena */ 
+            mfree_page(pf, a, 1);
+        }
+    }
+
+    lock_release(&mem_pool->lock);
+}
+
 
 /* 根据内存容量的大小初始化物理内存池的相关结构 */
 static void mem_pool_init(uint32_t all_mem)

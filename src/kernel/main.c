@@ -23,7 +23,7 @@ void u_prog_b(void);
 
 int main(void)
 {
-    put_str("start kernel ... \n");
+    put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
 
     //process_execute(u_prog_a, "user_prog_a");
@@ -49,10 +49,42 @@ int main(void)
 void k_thread_a(void *arg)
 {
     char * para =arg;
-    void * addr = sys_malloc(33);
+    void * addr1;
+    void * addr2;
+    void * addr3;
+    void * addr4;
+    void * addr5;
+    void * addr6;
+    void * addr7;
+    int max = 1000;
+    
+    printk(" k_thread_a(%d), test start ... \n", sys_getpid());
 
-    printk(" k_thread_b(%d), sys_malloc(33), addr: 0x%x\n", 
-                sys_getpid(), addr);
+    while(max-- > 0)
+    {
+        int size = 128;
+        addr1 = sys_malloc(size); 
+        size *= 2; 
+        addr2 = sys_malloc(size); 
+        size *= 2; 
+        addr3 = sys_malloc(size);
+        sys_free(addr1);
+        addr4 = sys_malloc(size);
+        size *= 2; size *= 2; size *= 2; size *= 2; 
+        size *= 2; size *= 2; size *= 2; 
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        sys_free(addr5);
+        size *= 2; 
+        addr7 = sys_malloc(size);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr2);
+        sys_free(addr3);
+        sys_free(addr4);
+    }
+
+    printk(" k_thread_a(%d), test end\n", sys_getpid());
 
     while(1)
         ;
@@ -60,11 +92,59 @@ void k_thread_a(void *arg)
 
 void k_thread_b(void *arg)
 {
-    char * para =arg;
-    void * addr = sys_malloc(63);
-    
-    printk(" k_thread_b(%d), sys_malloc(63), addr: 0x%x\n", 
-                sys_getpid(), addr);
+    char* para = arg;
+    void* addr1;
+    void* addr2;
+    void* addr3;
+    void* addr4;
+    void* addr5;
+    void* addr6;
+    void* addr7;
+    void* addr8;
+    void* addr9;
+    int max = 1000;
+     printk(" k_thread_b(%d), test start ... \n", sys_getpid());
+    while (max-- > 0) {
+        int size = 9;
+        addr1 = sys_malloc(size);
+        size *= 2; 
+        addr2 = sys_malloc(size);
+        size *= 2; 
+        sys_free(addr2);
+        addr3 = sys_malloc(size);
+        sys_free(addr1);
+        addr4 = sys_malloc(size);
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        sys_free(addr5);
+        size *= 2; 
+        addr7 = sys_malloc(size);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr3);
+        sys_free(addr4);
+
+        size *= 2; size *= 2; size *= 2; 
+        addr1 = sys_malloc(size);
+        addr2 = sys_malloc(size);
+        addr3 = sys_malloc(size);
+        addr4 = sys_malloc(size);
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        addr7 = sys_malloc(size);
+        addr8 = sys_malloc(size);
+        addr9 = sys_malloc(size);
+        sys_free(addr1);
+        sys_free(addr2);
+        sys_free(addr3);
+        sys_free(addr4);
+        sys_free(addr5);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr8);
+        sys_free(addr9);
+    }
+    printk(" k_thread_b(%d), test end\n", sys_getpid());
     
     while(1)
         ;
