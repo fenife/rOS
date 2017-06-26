@@ -26,12 +26,12 @@ int main(void)
     put_str("start kernel ... \n");
     init_all();     /* 初始化所有模块 */
 
-    process_execute(u_prog_a, "user_prog_a");
-    process_execute(u_prog_b, "user_prog_b");
+    //process_execute(u_prog_a, "user_prog_a");
+    //process_execute(u_prog_b, "user_prog_b");
 
     intr_enable();
 
-    printk(" I am %-12s, my pid: 0x%x\n", "main", sys_getpid());
+    //printk(" I am %-12s, my pid: 0x%x\n", "main", sys_getpid());
 
     thread_start("k_thread_a", 31, k_thread_a, "k_thread_a");
     thread_start("k_thread_b", 31, k_thread_b, "k_thread_b");
@@ -49,8 +49,10 @@ int main(void)
 void k_thread_a(void *arg)
 {
     char * para =arg;
+    void * addr = sys_malloc(33);
 
-    printk(" I am %-12s, my pid: 0x%x\n", para, sys_getpid());
+    printk(" k_thread_b(%d), sys_malloc(33), addr: 0x%x\n", 
+                sys_getpid(), addr);
 
     while(1)
         ;
@@ -59,8 +61,10 @@ void k_thread_a(void *arg)
 void k_thread_b(void *arg)
 {
     char * para =arg;
-
-    printk(" I am %-12s, my pid: 0x%x\n", para, sys_getpid());
+    void * addr = sys_malloc(63);
+    
+    printk(" k_thread_b(%d), sys_malloc(63), addr: 0x%x\n", 
+                sys_getpid(), addr);
     
     while(1)
         ;
@@ -69,7 +73,7 @@ void k_thread_b(void *arg)
 /* 测试用户进程 */
 void u_prog_a(void)
 {
-    printf(" I am %-12s, my pid: 0x%x\n", "u_prog_a", getpid());
+    printf(" u_prog_a(%d) \n", getpid());
 
     while(1)
         ;
@@ -78,7 +82,7 @@ void u_prog_a(void)
 /* 测试用户进程 */
 void u_prog_b(void)
 {
-    printf(" I am %-12s, my pid: 0x%x\n", "u_prog_b", getpid());
+    printf(" u_prog_b(%d) \n", getpid());
 
     while(1)
         ;

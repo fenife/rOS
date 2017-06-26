@@ -73,5 +73,6 @@ uint32_t addr_v2p(uint32_t vaddr);
 void * get_a_page(poolfg pf, uint32_t vaddr);
 void * get_user_pages(uint32_t pg_cnt);
 void block_desc_init(struct mem_block_desc * desc_array);
+void * sys_malloc(uint32_t size);
 
 #endif  /* __KERNEL_MEMORY_H */
