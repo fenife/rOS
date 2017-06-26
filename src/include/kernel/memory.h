@@ -69,10 +69,13 @@ uint32_t * get_pte(uint32_t vaddr);
 uint32_t * get_pde(uint32_t vaddr);
 void * get_kernel_pages(uint32_t pg_need);
 void * malloc_page(poolfg fg, uint32_t pg_need);
+void malloc_init(void);
 uint32_t addr_v2p(uint32_t vaddr);
 void * get_a_page(poolfg pf, uint32_t vaddr);
 void * get_user_pages(uint32_t pg_cnt);
 void block_desc_init(struct mem_block_desc * desc_array);
 void * sys_malloc(uint32_t size);
+void mfree_page(poolfg pf, void * _vaddr, uint32_t pg_cnt);
+void pfree(uint32_t pg_phy_addr);
 
 #endif  /* __KERNEL_MEMORY_H */

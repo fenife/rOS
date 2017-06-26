@@ -46,34 +46,6 @@ phm_pool user_pool;     /* 用户物理内存池 */
 vm_pool  kvm_pool;      /* 给内核分配虚拟内存地址 */
 
 
-
-/* 为malloc做准备 */
-void block_desc_init(struct mem_block_desc * desc_array)
-{
-    put_str("   block_desc_init ... ");
-    
-    uint16_t desc_idx;
-    uint16_t block_size = 16;
-
-    /* 初始化每个mem_block_desc描述符 */
-    for (desc_idx = 0; desc_idx < DESC_CNT; desc_idx++)
-    {
-        desc_array[desc_idx].size = block_size;
-
-        /* 初始化arena中的内存块数量 */
-        desc_array[desc_idx].blocks = 
-            (PG_SIZE - sizeof(struct arena)) / block_size;
-
-        list_init(&desc_array[desc_idx].free_list);
-
-        /* 更新为下一个规格内存块 */
-        block_size *= 2;
-    }
-
-    put_str("ok\n");
-}
-
-
 /* 在pf表示的虚拟内存池中申请pg_need个虚拟页,
  * 成功则返回虚拟页的起始地址, 失败则返回NULL
  */
@@ -322,6 +294,7 @@ void * get_a_page(poolfg pf, uint32_t vaddr)
     void * page_phyaddr = palloc(mem_pool);
     if (page_phyaddr == NULL)
     {
+        lock_release(&mem_pool->lock);
         return NULL;
     }
     page_table_add((void *)vaddr, page_phyaddr);
@@ -338,107 +311,6 @@ uint32_t addr_v2p(uint32_t vaddr)
      * 去掉其低12位的页表项属性+虚拟地址vaddr的低12位
      */
     return ((*pte & 0xfffff000) + (vaddr & 0x00000fff));
-}
-
-/* 根据内存容量的大小初始化物理内存池的相关结构 */
-static void mem_pool_init(uint32_t all_mem)
-{
-    put_str("   mem_pool_init statr  ... \n");
-
-    /* 页表大小 = 1页的页目录表 + 第0和第768个页目录项指向同一个页表
-     *          + 第769~1022个页目录项共指向254个页表，共256个页框
-     */
-    uint32_t page_table_size = PG_SIZE * 256;
-
-    /* 0x100000为低端1M内存 */
-    uint32_t used_mem = page_table_size + 0x100000;
-    uint32_t free_mem = all_mem - used_mem;
-
-    /* 1页为4k，不管总内存是不是4k的倍数，
-     * 对于以页为单位的内存分配策略，不足1页的内存暂不考虑
-     */
-    uint16_t all_free_pages = free_mem / PG_SIZE;
-    /* 分配给内核空间的空闲物理页 */
-    uint16_t kfree_pages = all_free_pages / 2;
-    /* 分配给用户空间的空闲物理页 */
-    uint16_t ufree_pages = all_free_pages - kfree_pages;
-
-    /* 为简化位图操作，余数不处理，坏处是这样做会丢内存；
-     * 好处是不用做内存的越界检查，因为位图表示的内存少于实际物理内存
-     */
-
-    /* Kernel BitMap的长度，位图中的一位表示一页，以字节为单位 */
-    uint32_t kbm_len = kfree_pages / 8;
-
-    /* User BitMap的长度 */
-    uint32_t ubm_len = ufree_pages / 8;
-
-    /* Kernel Pool start，内核内存池的起始地址 */
-    uint32_t kp_start = used_mem;
-
-    /* User Pool start，用户内存池的起始地址 */
-    uint32_t up_start = kp_start + kfree_pages * PG_SIZE;
-
-    /* 初始化内核空间的物理内存池 */
-    kernel_pool.pm_start = kp_start;
-    kernel_pool.size = kfree_pages * PG_SIZE;
-    kernel_pool.bm.len = kbm_len;
-
-    /* 初始化用户空间的物理内存池 */
-    user_pool.pm_start = up_start;
-    user_pool.size = ufree_pages * PG_SIZE;
-    user_pool.bm.len = ubm_len;
-
-    /********* 内核内存池和用户内存池位图 ***********
-     * 不用数组而用堆内存来存储位图的原因：
-     * 位图是全局的数据，长度不固定。
-     * 全局或静态的数组需要在编译时知道其长度；
-     * 而我们需要根据总内存大小算出需要多少字节，
-     * 所以改为指定一块内存来生成位图。
-     *************************************************/
-
-    /* 内核使用的最高地址是0xc009f000，这是主线程的栈地址
-     * 内核的大小预计为70K左右。
-     * 32M内存占用的位图是1k，内核内存池的位图先定在(0xc009a000)处
-     */
-    kernel_pool.bm.bits = (void *)MEM_BITMAP_BASE;
-
-    /* 用户内存池的位图紧跟在内核内存池位图之后 */
-    user_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len);
-
-    /******************** 输出内存池信息 **********************/
-    printk("    - kernel pool bitmap start  : 0x%x\n",
-            kernel_pool.bm.bits);
-    printk("    - kernel pool phy addr start: 0x%x\n",
-            kernel_pool.pm_start);
-    printk("    - user pool bitmap start    : 0x%x\n",
-            user_pool.bm.bits);
-    printk("    - user pool phy addr start  : 0x%x\n",
-            user_pool.pm_start);
-
-    /* 位图初始化：全部置0 */
-    bitmap_init(&kernel_pool.bm);
-    bitmap_init(&user_pool.bm);
-
-    lock_init(&kernel_pool.lock);
-    lock_init(&user_pool.lock);
-    
-    /* 下面初始化内核虚拟地址的位图，按实际物理内存大小生成数组
-     * 用于维护内核堆的虚拟地址，所以要和内核内存池大小一致
-     */
-    kvm_pool.bm.len = kbm_len;
-
-    /* 位图的数组指向一块未使用的内存，
-     * 目前定位在内核物理内存池和用户物理内存池之外
-     */
-    kvm_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
-
-    /* 虚拟内存池的起始地址 */
-    kvm_pool.vm_start = K_HEAP_START;
-
-    bitmap_init(&kvm_pool.bm);
-
-    put_str("   mem_pool_init done\n");
 }
 
 /* 返回arena中第idx个内存块的地址 */
@@ -576,6 +448,262 @@ void * sys_malloc(uint32_t size)
         lock_release(&mem_pool->lock);
         return (void *)b;
     }
+}
+
+
+/* 将物理地址pg_phy_addr回收到物理内存池 */
+void pfree(uint32_t pg_phy_addr)
+{
+    struct phm_pool * mem_pool;
+    uint32_t bit_idx = 0;
+
+    if (pg_phy_addr >= user_pool.pm_start)
+    {
+        /* 用户物理内存池 */
+        mem_pool = &user_pool;
+        bit_idx = (pg_phy_addr - user_pool.pm_start) / PG_SIZE;
+    }
+    else
+    {
+        /* 内核物理内存池 */
+        mem_pool = &kernel_pool;
+        bit_idx = (pg_phy_addr - kernel_pool.pm_start) / PG_SIZE;
+    }
+
+    /* 将位图中该位清0 */
+    bitmap_set(&mem_pool->bm, bit_idx, 0);
+}
+
+/* 去掉页表中虚拟地址vaddr的映射，只去掉vaddr对应的pte */
+static void page_table_pte_remove(uint32_t vaddr)
+{
+    uint32_t * pte = get_pte(vaddr);
+    *pte &= ~PG_P_1;    /* 将页表项pte的P位置0 */
+
+    /* 更新快表tlb */
+    asm volatile ("invlpg %0" : : "m" (vaddr) : "memory");
+}
+
+/* 在虚拟地址池中释放以_vaddr起始的连续pg_cnt个虚拟页地址 */
+static void vaddr_remove(poolfg pf, void * _vaddr, uint32_t pg_cnt)
+{
+    uint32_t bit_idx_start = 0;
+    uint32_t vaddr = (uint32_t)_vaddr;
+    uint32_t cnt = 0;
+
+    if (pf == PF_KERNEL)
+    {
+        /* 内核虚拟内存池 */
+        bit_idx_start = (vaddr - kvm_pool.vm_start) / PG_SIZE;
+        while (cnt < pg_cnt)
+        {
+            bitmap_set(&kvm_pool.bm, bit_idx_start + cnt++, 0);
+        }
+    }
+    else    
+    {
+        /* 用户虚拟内存池 */
+        struct task_struct * cur_thread = running_thread();
+        bit_idx_start = (vaddr - cur_thread->user_vaddr.vm_start) / PG_SIZE;
+        while (cnt < pg_cnt)
+        {
+            bitmap_set(&cur_thread->user_vaddr.bm, bit_idx_start + cnt++, 0);
+        }
+    }
+}
+
+/* 释放以虚拟地址vaddr为起始的cnt个物理页框 */
+void mfree_page(poolfg pf, void * _vaddr, uint32_t pg_cnt)
+{
+    uint32_t pg_phy_addr; 
+    uint32_t vaddr = (int32_t)_vaddr;
+    uint32_t page_cnt = 0;
+
+    kassert(pg_cnt > 1 && (vaddr % PG_SIZE == 0));
+    pg_phy_addr = addr_v2p(vaddr);  /* 获取虚拟地址vaddr对应的物理地址 */
+
+    /* 确保待释放的物理内存在低端1M+1k大小的页目录+1k大小的页表地址范围外 */
+    kassert((pg_phy_addr % PG_SIZE) == 0 && pg_phy_addr >= 0x102000);
+
+    /* 判断pg_phy_addr属于用户物理内存池还是内核物理内存池 */
+    if (pg_phy_addr >= user_pool.pm_start)
+    {
+        /* 位于user_pool内存池 */
+        vaddr -= PG_SIZE;
+        while (page_cnt < pg_cnt)
+        {
+            vaddr += PG_SIZE;
+            pg_phy_addr = addr_v2p(vaddr);
+
+            /* 确保物理地址属于用户物理内存池 */
+            kassert((pg_phy_addr % PG_SIZE) == 0    \
+                && pg_phy_addr >= user_pool.pm_start);
+
+            /* 先将对应的物理页框归还到内存池 */
+            pfree(pg_phy_addr);
+
+            /* 再从页表中清除此虚拟地址所在的页表项pte */
+            page_table_pte_remove(vaddr);
+
+            page_cnt++;
+        }
+
+        /* 清空虚拟地址的位图中的相应位 */
+        vaddr_remove(pf, _vaddr, pg_cnt);
+    }
+    else
+    {
+        /* 位于kernel_pool内存池 */
+        vaddr -= PG_SIZE;
+        while (page_cnt < pg_cnt)
+        {
+            vaddr += PG_SIZE;
+            pg_phy_addr = addr_v2p(vaddr);
+
+            /* 确保待释放的物理内存只属于内核物理内存池 */
+            kassert((pg_phy_addr % PG_SIZE) == 0 \
+                && pg_phy_addr >= kernel_pool.pm_start  \
+                && pg_phy_addr < user_pool.pm_start);
+
+            /* 先将对应的物理页框归还到内存池 */
+            pfree(pg_phy_addr);
+
+            /* 再从页表中清除此虚拟地址所在的页表项pte */
+            page_table_pte_remove(vaddr);
+
+            page_cnt++;
+        }
+
+        /* 清空虚拟地址的位图中的相应位 */
+        vaddr_remove(pf, _vaddr, pg_cnt);
+    }
+}
+
+/* 根据内存容量的大小初始化物理内存池的相关结构 */
+static void mem_pool_init(uint32_t all_mem)
+{
+    put_str("   mem_pool_init statr  ... \n");
+
+    /* 页表大小 = 1页的页目录表 + 第0和第768个页目录项指向同一个页表
+     *          + 第769~1022个页目录项共指向254个页表，共256个页框
+     */
+    uint32_t page_table_size = PG_SIZE * 256;
+
+    /* 0x100000为低端1M内存 */
+    uint32_t used_mem = page_table_size + 0x100000;
+    uint32_t free_mem = all_mem - used_mem;
+
+    /* 1页为4k，不管总内存是不是4k的倍数，
+     * 对于以页为单位的内存分配策略，不足1页的内存暂不考虑
+     */
+    uint16_t all_free_pages = free_mem / PG_SIZE;
+    /* 分配给内核空间的空闲物理页 */
+    uint16_t kfree_pages = all_free_pages / 2;
+    /* 分配给用户空间的空闲物理页 */
+    uint16_t ufree_pages = all_free_pages - kfree_pages;
+
+    /* 为简化位图操作，余数不处理，坏处是这样做会丢内存；
+     * 好处是不用做内存的越界检查，因为位图表示的内存少于实际物理内存
+     */
+
+    /* Kernel BitMap的长度，位图中的一位表示一页，以字节为单位 */
+    uint32_t kbm_len = kfree_pages / 8;
+
+    /* User BitMap的长度 */
+    uint32_t ubm_len = ufree_pages / 8;
+
+    /* Kernel Pool start，内核内存池的起始地址 */
+    uint32_t kp_start = used_mem;
+
+    /* User Pool start，用户内存池的起始地址 */
+    uint32_t up_start = kp_start + kfree_pages * PG_SIZE;
+
+    /* 初始化内核空间的物理内存池 */
+    kernel_pool.pm_start = kp_start;
+    kernel_pool.size = kfree_pages * PG_SIZE;
+    kernel_pool.bm.len = kbm_len;
+
+    /* 初始化用户空间的物理内存池 */
+    user_pool.pm_start = up_start;
+    user_pool.size = ufree_pages * PG_SIZE;
+    user_pool.bm.len = ubm_len;
+
+    /********* 内核内存池和用户内存池位图 ***********
+     * 不用数组而用堆内存来存储位图的原因：
+     * 位图是全局的数据，长度不固定。
+     * 全局或静态的数组需要在编译时知道其长度；
+     * 而我们需要根据总内存大小算出需要多少字节，
+     * 所以改为指定一块内存来生成位图。
+     *************************************************/
+
+    /* 内核使用的最高地址是0xc009f000，这是主线程的栈地址
+     * 内核的大小预计为70K左右。
+     * 32M内存占用的位图是1k，内核内存池的位图先定在(0xc009a000)处
+     */
+    kernel_pool.bm.bits = (void *)MEM_BITMAP_BASE;
+
+    /* 用户内存池的位图紧跟在内核内存池位图之后 */
+    user_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len);
+
+    /******************** 输出内存池信息 **********************/
+    printk("    - kernel pool bitmap start  : 0x%x\n",
+            kernel_pool.bm.bits);
+    printk("    - kernel pool phy addr start: 0x%x\n",
+            kernel_pool.pm_start);
+    printk("    - user pool bitmap start    : 0x%x\n",
+            user_pool.bm.bits);
+    printk("    - user pool phy addr start  : 0x%x\n",
+            user_pool.pm_start);
+
+    /* 位图初始化：全部置0 */
+    bitmap_init(&kernel_pool.bm);
+    bitmap_init(&user_pool.bm);
+
+    lock_init(&kernel_pool.lock);
+    lock_init(&user_pool.lock);
+    
+    /* 下面初始化内核虚拟地址的位图，按实际物理内存大小生成数组
+     * 用于维护内核堆的虚拟地址，所以要和内核内存池大小一致
+     */
+    kvm_pool.bm.len = kbm_len;
+
+    /* 位图的数组指向一块未使用的内存，
+     * 目前定位在内核物理内存池和用户物理内存池之外
+     */
+    kvm_pool.bm.bits = (void *)(MEM_BITMAP_BASE + kbm_len + ubm_len);
+
+    /* 虚拟内存池的起始地址 */
+    kvm_pool.vm_start = K_HEAP_START;
+
+    bitmap_init(&kvm_pool.bm);
+
+    put_str("   mem_pool_init done\n");
+}
+
+/* 为malloc做准备 */
+void block_desc_init(struct mem_block_desc * desc_array)
+{
+    put_str("   block_desc_init ... ");
+    
+    uint16_t desc_idx;
+    uint16_t block_size = 16;
+
+    /* 初始化每个mem_block_desc描述符 */
+    for (desc_idx = 0; desc_idx < DESC_CNT; desc_idx++)
+    {
+        desc_array[desc_idx].size = block_size;
+
+        /* 初始化arena中的内存块数量 */
+        desc_array[desc_idx].blocks = 
+            (PG_SIZE - sizeof(struct arena)) / block_size;
+
+        list_init(&desc_array[desc_idx].free_list);
+
+        /* 更新为下一个规格内存块 */
+        block_size *= 2;
+    }
+
+    put_str("ok\n");
 }
 
 /* 内存管理部分初始化入口 */
