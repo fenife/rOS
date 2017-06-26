@@ -751,9 +751,7 @@ static void mem_pool_init(uint32_t all_mem)
 
 /* 为malloc做准备 */
 void block_desc_init(struct mem_block_desc * desc_array)
-{
-    put_str("   block_desc_init ... ");
-    
+{  
     uint16_t desc_idx;
     uint16_t block_size = 16;
 
@@ -771,8 +769,6 @@ void block_desc_init(struct mem_block_desc * desc_array)
         /* 更新为下一个规格内存块 */
         block_size *= 2;
     }
-
-    put_str("ok\n");
 }
 
 /* 内存管理部分初始化入口 */
