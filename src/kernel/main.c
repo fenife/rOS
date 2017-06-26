@@ -31,10 +31,10 @@ int main(void)
 
     intr_enable();
 
-    printk(" main_pid    : 0x%x\n", sys_getpid());
+    printk(" I am %-12s, my pid: 0x%x\n", "main", sys_getpid());
 
-    thread_start("k_thread_a", 31, k_thread_a, "argA ");
-    thread_start("k_thread_b", 31, k_thread_b, "argB ");
+    thread_start("k_thread_a", 31, k_thread_a, "k_thread_a");
+    thread_start("k_thread_b", 31, k_thread_b, "k_thread_b");
 
     while (1)
         ;
@@ -50,8 +50,7 @@ void k_thread_a(void *arg)
 {
     char * para =arg;
 
-    printk(" thread_a_pid: 0x%x\n", sys_getpid());
-    //printk(" prog_a_pid  : 0x%x\n", prog_a_pid);
+    printk(" I am %-12s, my pid: 0x%x\n", para, sys_getpid());
 
     while(1)
         ;
@@ -61,9 +60,8 @@ void k_thread_b(void *arg)
 {
     char * para =arg;
 
-    printk(" thread_b_pid: 0x%x\n", sys_getpid());
-    //printk(" prog_b_pid  : 0x%x\n", prog_b_pid);
-
+    printk(" I am %-12s, my pid: 0x%x\n", para, sys_getpid());
+    
     while(1)
         ;
 }
@@ -71,7 +69,7 @@ void k_thread_b(void *arg)
 /* 测试用户进程 */
 void u_prog_a(void)
 {
-    printf(" prog_a_pid  : 0x%x\n", getpid());
+    printf(" I am %-12s, my pid: 0x%x\n", "u_prog_a", getpid());
 
     while(1)
         ;
@@ -80,7 +78,7 @@ void u_prog_a(void)
 /* 测试用户进程 */
 void u_prog_b(void)
 {
-    printf(" prog_b_pid  : 0x%x\n", getpid());
+    printf(" I am %-12s, my pid: 0x%x\n", "u_prog_b", getpid());
 
     while(1)
         ;

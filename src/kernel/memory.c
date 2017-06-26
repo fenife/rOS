@@ -27,6 +27,18 @@ typedef struct phm_pool {
     struct lock lock;   /* 申请内存时互斥 */
 } phm_pool;
 
+/* 内存仓库arena元信息 */
+struct arena {
+    struct mem_block_desc * desc;   /* 此arena关联的mem_block_desc */
+
+    /* large为ture时，cnt表示的是页框数，否则cnt表示空闲mem_block数量 */
+    uint32_t cnt;
+    bool large;
+};
+
+/* 内核内存块描述符数组 */
+struct mem_block_desc k_block_descs[DESC_CNT];
+
 phm_pool kernel_pool;   /* 内核物理内存池 */
 phm_pool user_pool;     /* 用户物理内存池 */
 vm_pool  kvm_pool;      /* 给内核分配虚拟内存地址 */
@@ -235,7 +247,13 @@ void *get_user_pages(uint32_t pg_cnt)
 {
     lock_acquire(&user_pool.lock);
     void * vaddr = malloc_page(PF_USER, pg_cnt);
-    memset(vaddr, 0, pg_cnt * PG_SIZE);
+
+    /* 若分配的地址不为空，将页框清0后返回 */
+    if (vaddr != NULL)
+    {
+        memset(vaddr, 0, pg_cnt * PG_SIZE);
+    }
+    
     lock_release(&user_pool.lock);
     return vaddr;
 }
@@ -273,6 +291,7 @@ void * get_a_page(poolfg pf, uint32_t vaddr)
     void * page_phyaddr = palloc(mem_pool);
     if (page_phyaddr == NULL)
     {
+        lock_release(&mem_pool->lock);
         return NULL;
     }
     page_table_add((void *)vaddr, page_phyaddr);
@@ -392,6 +411,32 @@ static void mem_pool_init(uint32_t all_mem)
     put_str("   mem_pool_init done\n");
 }
 
+/* 为malloc做准备 */
+void block_desc_init(struct mem_block_desc * desc_array)
+{
+    put_str("   block_desc_init ... ");
+    
+    uint16_t desc_idx;
+    uint16_t block_size = 16;
+
+    /* 初始化每个mem_block_desc描述符 */
+    for (desc_idx = 0; desc_idx < DESC_CNT; desc_idx++)
+    {
+        desc_array[desc_idx].size = block_size;
+
+        /* 初始化arena中的内存块数量 */
+        desc_array[desc_idx].blocks = 
+            (PG_SIZE - sizeof(struct arena)) / block_size;
+
+        list_init(&desc_array[desc_idx].free_list);
+
+        /* 更新为下一个规格内存块 */
+        block_size *= 2;
+    }
+
+    put_str("ok\n");
+}
+
 /* 内存管理部分初始化入口 */
 void mem_init(void)
 {
@@ -404,5 +449,8 @@ void mem_init(void)
 
     mem_pool_init(mem_bytes_total); /* 初始化物理内存池 */
 
+    /* 初始化mem_block_desc数组descs，为malloc做准备 */
+    block_desc_init(k_block_descs);
+    
     put_str("mem_init done\n");
 }

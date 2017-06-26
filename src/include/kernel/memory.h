@@ -46,6 +46,20 @@ typedef struct vm_pool {
     uint32_t vm_start; /* 虚拟地址的起始值，以后将以这个地址开始分配内存 */
 } vm_pool;
 
+/* 内存块 */
+struct mem_block {
+    struct node free_elem;
+};
+
+/* 内存块描述符 */
+struct mem_block_desc {
+    uint32_t size;          /* 内存块大小 */
+    uint32_t blocks;        /* 本arena中可容纳此mem_block的数量 */
+    struct list free_list;  /* 空闲内存块链表 */
+};
+
+#define DESC_CNT    7       /* 内存块描述符个数 */
+
 extern struct vm_pool  kvm_pool;
 extern struct phm_pool kernel_pool;
 extern struct phm_pool user_pool;
@@ -58,5 +72,6 @@ void * malloc_page(poolfg fg, uint32_t pg_need);
 uint32_t addr_v2p(uint32_t vaddr);
 void * get_a_page(poolfg pf, uint32_t vaddr);
 void * get_user_pages(uint32_t pg_cnt);
+void block_desc_init(struct mem_block_desc * desc_array);
 
 #endif  /* __KERNEL_MEMORY_H */
