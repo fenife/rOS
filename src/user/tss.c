@@ -67,7 +67,7 @@ static struct gdt_desc make_gdt_desc(uint32_t * desc_addr,
 /* 在gdt中创建tss并重新加载gdt */
 void tss_init(void)
 {
-    put_str("tss_init start ... \n");
+    put_str("tss_init ... ");
 
     uint32_t tss_size = sizeof(tss);
     memset(&tss, 0, tss_size);
@@ -97,5 +97,5 @@ void tss_init(void)
     asm volatile ("lgdt %0" : : "m" (gdt_operand));
     asm volatile ("ltr %w0" : : "r" (SELECTOR_TSS));
     
-    put_str("tss_init and ltr done\n");
+    put_str("ok\n");
 }

@@ -46,6 +46,7 @@ extern intr_handler intr_entry_table[IDT_DESC_CNT];
 /* 初始化可编程中断控制器8259A */
 static void pic_init(void)
 {
+    put_str("   pic_init ... ");
     /* 初始化主片 */
     outb(PIC_M_CTRL, 0x11); /* ICW1: 边沿触发，级联8259，需要ICW4 */
     /* ICW2: 起始中断向量号为0x20，也就是IR[0-7]为 0x20 ~ 0x27 */
@@ -64,7 +65,7 @@ static void pic_init(void)
    outb (PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
 
-    put_str("   pic_init done\n");
+    put_str("ok\n");
 }
 
 /****************************************************
@@ -88,6 +89,8 @@ static void create_idt_desc(struct intr_desc * desc,
 /* 初始化中断描述符表 */
 static void idt_desc_init(void)
 {
+    put_str("   idt_desc_init ... ");
+    
     int i;
     int last_index = IDT_DESC_CNT - 1;
 
@@ -102,7 +105,7 @@ static void idt_desc_init(void)
      */
     create_idt_desc(&idt[last_index], IDT_DESC_ATTR_DPL3, syscall_handler);
 
-    put_str("   idt_desc_init done\n");
+    put_str("ok\n");
 }
 
 /* 通用的中断处理函数，一般用在异常出现时的处理 */
@@ -149,7 +152,9 @@ static void general_intr_handler(uint8_t vec_nr)
 
 /* 完成一般中断处理函数注册及异常名称注册 */
 static void exception_init(void)
-{
+{    
+    put_str("   exception_init ... ");
+
     int i = 0;
 
     /* intr_handler_table数组中的函数是在进入中断后根据中断向量号调用的,
@@ -189,7 +194,7 @@ static void exception_init(void)
     intr_name[18] = "#MC Machine-Check Exception";
     intr_name[19] = "#XF SIMD Floating-Point Exception";
 
-    put_str("   exception_init done\n");
+    put_str("ok\n");
 }
 
 /* 完成与中断有关的所有初始化工作 */

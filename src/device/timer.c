@@ -66,10 +66,10 @@ static void intr_timer_handler(void)
 /* 初始化定时器/计数器 PIT 8253 */
 void timer_init(void)
 {
-    put_str("timer_init start ...\n");
+    put_str("timer_init ... ");
     /* 设置8253的定时周期,也就是发中断的周期 */
     set_timer(TIMER0_PORT, TIMER0_NO, READ_WRITE_LATCH,
             TIMER_MODE, TIMER0_INITIAL_VALUE);
     register_handler(0x20, intr_timer_handler);
-    put_str("timer_init done.\n");
+    put_str("ok\n");
 }

@@ -149,6 +149,9 @@ void process_execute(void *filename, char *name)
     thread_create(thread, start_process, filename);
     thread->pgdir = create_page_dir();
 
+    /* 初始化用户进程内存块描述符 */
+    block_desc_init(thread->u_block_desc);
+
     intr_status old_status = intr_disable();
     kassert(!elem_find(&thread_ready_list, &thread->general_tag));
     list_append(&thread_ready_list, &thread->general_tag);

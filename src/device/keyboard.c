@@ -283,8 +283,8 @@ static void intr_keyboard_handler(void)
 /* 键盘初始化 */
 void keyboard_init(void)
 {
-    put_str("keyboard_init start ...\n");
+    put_str("keyboard_init ... ");
     ioqueue_init(&kbd_buf);     /* 初始化环形缓冲区 */
     register_handler(0x21, intr_keyboard_handler);
-    put_str("keyboard_init done\n");
+    put_str("ok\n");
 }

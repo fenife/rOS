@@ -7,6 +7,8 @@
 #include <thread.h>
 #include <console.h>
 #include <string.h>
+#include <memory.h>
+
 
 /* 系统调用子功能个数 */
 #define syscall_nr 32
@@ -31,10 +33,12 @@ uint32_t sys_write(char * str)
 /* 初始化系统调用 */
 void syscall_init(void)
 {
-    put_str("syscall_init start ... \n");
+    put_str("syscall_init ... ");
 
     syscall_table[SYS_GETPID] = sys_getpid;
     syscall_table[SYS_WRITE]  = sys_write;
+    syscall_table[SYS_MALLOC] = sys_malloc;
+    syscall_table[SYS_FREE]   = sys_free;
 
-    put_str("syscall_init done\n");
+    put_str("ok\n");
 }

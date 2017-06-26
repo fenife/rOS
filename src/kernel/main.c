@@ -15,6 +15,7 @@
 #include <syscall.h>
 #include <sys.h>
 #include <stdio.h>
+#include <memory.h>
 
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
@@ -23,18 +24,16 @@ void u_prog_b(void);
 
 int main(void)
 {
-    put_str("start kernel ... \n");
+    put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
-
-    process_execute(u_prog_a, "user_prog_a");
-    process_execute(u_prog_b, "user_prog_b");
-
+    
     intr_enable();
+    
+    process_execute(u_prog_a, "u_prog_a");
+    process_execute(u_prog_b, "u_prog_b");
 
-    printk(" main_pid    : 0x%x\n", sys_getpid());
-
-    thread_start("k_thread_a", 31, k_thread_a, "argA ");
-    thread_start("k_thread_b", 31, k_thread_b, "argB ");
+    thread_start("k_thread_a", 31, k_thread_a, "k_thread_a");
+    thread_start("k_thread_b", 31, k_thread_b, "k_thread_b");
 
     while (1)
         ;
@@ -42,28 +41,45 @@ int main(void)
     return 0;
 }
 
-/* 在线程中运行的函数
- * 用void*来通用表示参数，被调用的函数知道自己需要什么类型的参数，
- * 自己转换后再用
- */
+/* 在线程中运行的函数 */
 void k_thread_a(void *arg)
 {
-    char * para =arg;
+    void * addr1 = sys_malloc(256);
+    void * addr2 = sys_malloc(255);
+    void * addr3 = sys_malloc(254);
 
-    printk(" thread_a_pid: 0x%x\n", sys_getpid());
-    //printk(" prog_a_pid  : 0x%x\n", prog_a_pid);
+    printk(" thread_a, malloc addr: %x, %x, %x\n", 
+                (int)addr1, (int)addr2, (int)addr3);
 
+    int cpu_delay = 100000;
+    while (cpu_delay-- > 0)
+        ;
+
+    sys_free(addr1);
+    sys_free(addr2);
+    sys_free(addr3);
+    
     while(1)
         ;
 }
 
 void k_thread_b(void *arg)
 {
-    char * para =arg;
+    void * addr1 = sys_malloc(256);
+    void * addr2 = sys_malloc(255);
+    void * addr3 = sys_malloc(254);
 
-    printk(" thread_b_pid: 0x%x\n", sys_getpid());
-    //printk(" prog_b_pid  : 0x%x\n", prog_b_pid);
+    printk(" thread_b, malloc addr: %x, %x, %x\n", 
+                (int)addr1, (int)addr2, (int)addr3);
 
+    int cpu_delay = 100000;
+    while (cpu_delay-- > 0)
+        ;
+
+    sys_free(addr1);
+    sys_free(addr2);
+    sys_free(addr3);
+    
     while(1)
         ;
 }
@@ -71,8 +87,21 @@ void k_thread_b(void *arg)
 /* 测试用户进程 */
 void u_prog_a(void)
 {
-    printf(" prog_a_pid  : 0x%x\n", getpid());
+    void * addr1 = malloc(256);
+    void * addr2 = malloc(255);
+    void * addr3 = malloc(254);
 
+    printf(" prog_a, malloc addr: %x, %x, %x\n", 
+                (int)addr1, (int)addr2, (int)addr3);
+
+    int cpu_delay = 100000;
+    while (cpu_delay-- > 0)
+        ;
+
+    free(addr1);
+    free(addr2);
+    free(addr3);
+    
     while(1)
         ;
 }
@@ -80,8 +109,21 @@ void u_prog_a(void)
 /* 测试用户进程 */
 void u_prog_b(void)
 {
-    printf(" prog_b_pid  : 0x%x\n", getpid());
+    void * addr1 = malloc(256);
+    void * addr2 = malloc(255);
+    void * addr3 = malloc(254);
 
+    printf(" prog_b, malloc addr: %x, %x, %x\n", 
+                (int)addr1, (int)addr2, (int)addr3);
+
+    int cpu_delay = 100000;
+    while (cpu_delay-- > 0)
+        ;
+
+    free(addr1);
+    free(addr2);
+    free(addr3);
+    
     while(1)
         ;
 }
