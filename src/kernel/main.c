@@ -16,6 +16,7 @@
 #include <sys.h>
 #include <stdio.h>
 #include <memory.h>
+#include <timer.h>
 
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
@@ -26,6 +27,13 @@ int main(void)
 {
     put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
+
+    mtime_sleep(100000);
+    
+    printk("sleep end\n");
+    
+    while(1)
+        ;
     
     intr_enable();
     

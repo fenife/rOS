@@ -12,6 +12,7 @@
 #include <keyboard.h>
 #include <tss.h>
 #include <sys.h>
+#include <ide.h>
 
 /* 负责初始化所有模块 */
 void init_all(void)
@@ -26,6 +27,8 @@ void init_all(void)
     keyboard_init();    /* 键盘初始化 */
     tss_init();         /* tss初始化 */
     syscall_init();     /* 初始化系统调用 */
+    intr_enable();      /* 后面的ide_init需要打开中断 */
+    ide_init();         /* 初始化硬盘 */
     
     put_str("init_all done.\n");
 }
