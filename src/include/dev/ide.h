@@ -47,6 +47,9 @@ struct ide_channel {
 extern uint8_t channel_cnt;
 extern struct ide_channel channel[];
 
+void intr_hd_handler(uint8_t irq_no);
 void ide_init(void);
+void ide_read(struct disk *hd, uint32_t lba, void *buf, uint32_t sec_cnt);
+void ide_write(struct disk *hd, uint32_t lba, void *buf, uint32_t sec_cnt);
 
 #endif  /* __DEVICE_IDE_H */
