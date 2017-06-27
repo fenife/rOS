@@ -26,6 +26,9 @@ int main(void)
 {
     put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
+
+    while(1)
+        ;
     
     intr_enable();
     

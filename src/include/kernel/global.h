@@ -136,4 +136,6 @@ struct gdt_desc {
 /* 实现除法上的向上取整 */
 #define DIV_ROUND_UP(X, STEP)   ((X + STEP - 1) / (STEP))
 
+#define UNUSED  __attribute__ ((unused))
+
 #endif  /* __KERNEL_GLOBAL_H */

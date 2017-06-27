@@ -7,6 +7,9 @@
 #include <memory.h>
 #include <string.h>
 #include <stdio.h>
+#include <global.h>
+#include <print.h>
+#include <debug.h>
 
 /* 定义硬盘各寄存器的端口号 */
 #define reg_data(channel)	 (channel->port_base + 0)
