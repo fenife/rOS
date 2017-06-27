@@ -6,6 +6,6 @@
 
 #include <stdint.h>
 void timer_init(void);
-void mtime_sleep(uint32_t m_seconds);
+void mtime_sleep(uint32_t m_seconds); 
 
 #endif  /* __DEVICE_TIMER_H */

@@ -20,6 +20,8 @@
 #define READ_WRITE_LATCH    3
 #define PIT_CONTROL_PORT    0x43    /* 控制 寄存器的端口号 */
 
+#define mil_seconds_per_intr    (1000 / IRQ0_FREQUENCY)
+
 uint32_t ticks;     /* ticks是内核自中断开启以来总共的嘀嗒数 */
 
 /* 初始化模式控制寄存器，并给计数器赋初始值 */
