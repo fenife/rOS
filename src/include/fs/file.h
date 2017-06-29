@@ -17,9 +17,9 @@
  
  /* 标准输入输出描述符 */
  enum std_fd {
-    stdin_no,   /* 0 标准输入 */
-    stdout_no,  /* 1 标准输出 */
-    stderr_no,   /* 2 标准错误 */
+    stdin_no,       /* 0 标准输入 */
+    stdout_no,      /* 1 标准输出 */
+    stderr_no,      /* 2 标准错误 */
  };
  
  /* 位图类型 */
