@@ -123,6 +123,20 @@ void init_thread(task_struct * pthread, char * name, int pri)
 
     pthread->elapsed_ticks = 0;
     pthread->pgdir       = NULL;
+
+    /* 预留标准输入、标准输出、标准错误 */
+    pthread->fd_table[0] = 0;
+    pthread->fd_table[1] = 1;
+    pthread->fd_table[2] = 2;
+
+    /* 其余的全置为-1 */
+    uint8_t fd_idx = 0;
+    while (fd_idx < MAX_FILES_OPEN_PER_PROC) 
+    {
+        pthread->fd_table[fd_idx] = -1;
+        fd_idx++;
+    }
+    
     pthread->stack_magic = STACK_BORDER_MAGIC;
 }
 

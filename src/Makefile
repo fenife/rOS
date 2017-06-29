@@ -15,6 +15,7 @@ INC_DIR	+= -I${TOP_DIR}/include/kernel
 INC_DIR	+= -I${TOP_DIR}/include/dev
 INC_DIR	+= -I${TOP_DIR}/include/thread
 INC_DIR	+= -I${TOP_DIR}/include/user
+INC_DIR	+= -I${TOP_DIR}/include/fs
 
 ASFLAGS := -f elf
 CFLAGS  := -Wall ${INC_DIR} -c -fno-builtin -W -Wstrict-prototypes \
@@ -29,7 +30,8 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/console.o ${OBJS_DIR}/sync.o  ${OBJS_DIR}/keyboard.o \
 		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o ${OBJS_DIR}/process.o	\
 		${OBJS_DIR}/syscall.o ${OBJS_DIR}/sys.o ${OBJS_DIR}/stdio.o	\
-		${OBJS_DIR}/ide.o
+		${OBJS_DIR}/ide.o ${OBJS_DIR}/fs.o ${OBJS_DIR}/inode.o \
+		${OBJS_DIR}/file.o
 
 all : build rhd
 
@@ -98,6 +100,15 @@ ${OBJS_DIR}/stdio.o : ${TOP_DIR}/lib/stdio.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/ide.o : ${TOP_DIR}/device/ide.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/fs.o : ${TOP_DIR}/fs/fs.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/inode.o : ${TOP_DIR}/fs/inode.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/file.o : ${TOP_DIR}/fs/file.c
 	${CC} ${CFLAGS} $< -o $@
 
 ##############    汇编代码编译    ###############
