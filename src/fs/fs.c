@@ -13,6 +13,77 @@
 #include <debug.h>
 #include <memory.h>
 
+struct partition * cur_part;    /* 默认情况下操作的是哪个分区 */
+
+/* 在分区链表中找到名为part_name的分区，并将其指针赋值给cur_part */
+static bool mount_partition(struct node *pelem, int arg)
+{
+    char * part_name = (char *)arg;
+    struct partition *part = container_of(struct partition, part_tag, pelem);
+
+    if (!strcmp(part->name, part_name))
+    {
+        cur_part = part;
+        struct disk *hd = cur_part->my_disk;
+
+        /* sb_buf用来存储从硬盘上读入的超级块 */
+        struct super_block *sb_buf =
+            (struct super_block *)sys_malloc(SECTOR_SIZE);
+
+        /* 在内存中创建分区cur_part的超级块 */
+        cur_part->sb = (struct super_block *)
+                sys_malloc(sizeof(struct super_block));
+        if(cur_part->sb == NULL)
+        {
+            PANIC("alloc memory failed!\n");
+        }
+
+        /* 读入超级块 */
+        memset(sb_buf, 0, SECTOR_SIZE);
+        ide_read(hd, cur_part->start_lba + 1, sb_buf, 1);
+
+        /* 把sb_buf中超级块的信息复制到分区的超级块sb中 */
+        memcpy(cur_part->sb, sb_buf, sizeof(struct super_block));
+
+        /* 1.将硬盘上的块位图读入到内存 */
+        cur_part->block_bm.bits = (uint8_t *)
+            sys_malloc(sb_buf->block_bitmap_sects * SECTOR_SIZE);
+        if (cur_part->block_bm.bits == NULL)
+        {
+            PANIC("alloc memory failed!\n");
+        }
+        cur_part->block_bm.len = sb_buf->block_bitmap_sects * SECTOR_SIZE;
+
+        /* 从硬盘上读入块位图到分区的block_bitmap.bits */
+        ide_read(hd, sb_buf->block_bitmap_lba, cur_part->block_bm.bits,
+                    sb_buf->block_bitmap_sects);
+
+        /* 2.将硬盘上的inode位图读入到内存 */
+        cur_part->inode_bm.bits = (uint8_t *)
+            sys_malloc(sb_buf->inode_bitmap_sects * SECTOR_SIZE);
+        if (cur_part->inode_bm.bits == NULL)
+        {
+            PANIC("alloc memory failed!\n");
+        }
+        cur_part->inode_bm.len = sb_buf->inode_bitmap_sects * SECTOR_SIZE;
+
+        /* 从硬盘上读入inode位图到分区的inode_bitmap.bits */
+        ide_read(hd, sb_buf->inode_bitmap_lba, cur_part->inode_bm.bits,
+                    sb_buf->inode_bitmap_sects);
+
+        list_init(&cur_part->open_inodes);
+        printk("mount %s done!\n", part->name);
+
+        /* 此处返回true是为了迎合主调函数list_traversal的实现，
+         * 与函数本身功能无关。只有返回true时list_traversal才会停止遍历，
+         * 减少了后面元素无意义的遍历
+         */
+        return true;
+    }
+    return false;       /* 使list_traversal继续遍历 */
+}
+
+
 /* 格式化分区，也就是初始化分区的元信息，创建文件系统
  * 为方便实现，本系统中一个块大小是一扇区
  */
@@ -96,7 +167,7 @@ static void partition_format(struct partition * part)
     buf[0] |= 0x01;     /* 第0个块预留给根目录，位图中先占位 */
     uint32_t block_bitmap_last_byte = block_bitmap_bit_len / 8;
     uint8_t block_bitmap_last_bit   = block_bitmap_bit_len % 8;
-    
+
     /* last_size是位图所在最后一个扇区中，不足一扇区的其余部分 */
     uint32_t last_size = SECTOR_SIZE - (block_bitmap_last_byte % SECTOR_SIZE);
 
@@ -131,7 +202,7 @@ static void partition_format(struct partition * part)
     struct inode * i = (struct inode *)buf;
     i->i_size = sb.dir_entry_size * 2;      /* .和.. */
     i->i_no = 0;      /* 根目录占inode数组中第0个inode */
-    
+
     /* 由于上面的memset，i_sectors数组的其它元素都初始化为0 */
     i->i_sectors[0] = sb.data_start_lba;
     ide_write(hd, sb.inode_table_lba, buf, sb.inode_table_sects);
@@ -210,12 +281,12 @@ void filesys_init(void)
                     memset(sb_buf, 0, SECTOR_SIZE);
 
                     /* 读出分区的超级块，根据魔数是否正确来判断
-                     *是否存在文件系统 
+                     *是否存在文件系统
                      */
                     ide_read(hd, part->start_lba + 1, sb_buf, 1);
 
                     /* 只支持自己的文件系统，若磁盘上已经有文件系统
-                     * 就不再格式化 
+                     * 就不再格式化
                      */
                     if (sb_buf->magic == 0x20170629)
                     {
@@ -237,4 +308,10 @@ void filesys_init(void)
         channel_no++;           /* 下一通道 */
     }
     sys_free(sb_buf);
+
+    /* 确定默认操作的分区 */
+    char default_part[8] = "sdb1";
+
+    /* 挂载分区 */
+    list_traversal(&partition_list, mount_partition, (int)default_part);
 }
