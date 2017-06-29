@@ -180,7 +180,7 @@ struct inode * inode_open(struct partition *part, uint32_t inode_no)
 void inode_close(struct inode * inode) 
 {
     /* 若没有进程再打开此文件，将此inode去掉并释放空间 */
-    enum intr_status old_status = intr_disable();
+    intr_status old_status = intr_disable();
     if (--inode->i_open_cnts == 0) 
     {
         /* 将I结点从part->open_inodes中去掉 */
