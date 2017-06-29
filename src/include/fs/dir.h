@@ -11,7 +11,7 @@
 
 #define MAX_FILE_NAME_LEN   16      /* 最大文件名长度 */
 
-/* 目录结构 */
+/* 目录结构，只在内存中存在，不会存在磁盘中 */
 struct dir {
     struct inode * inode;
     uint32_t dir_pos;       /* 记录在目录内的偏移 */
@@ -23,6 +23,6 @@ struct dir_entry {
     char filename[MAX_FILE_NAME_LEN];   /* 普通文件或目录名称 */
     uint32_t i_no;              /* 普通文件或目录对应的inode编号 */
     enum file_types f_type;     /* 文件类型 */
-}
+};
 
 #endif  /* __FS_DIR_H */
