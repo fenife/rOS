@@ -14,9 +14,9 @@ uint32_t printf(const char *fmt, ...)
     char buf[1024] = { 0 };
 
 	va_start(args, fmt);
-	i = vsprintf(buf,fmt,args);
+	i = vsprintf(buf, fmt, args);
 	va_end(args);
-	write(buf);
+	write(1, buf, i);
 
 	return i;
 }
