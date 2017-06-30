@@ -443,6 +443,7 @@ int32_t sys_open(const char* pathname, uint8_t flags)
                             (strrchr(pathname, '/') + 1), flags);
         
             dir_close(searched_record.parent_dir);
+            break;
             
         default:
             /* 其余情况均为打开已存在文件:
