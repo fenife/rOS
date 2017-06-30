@@ -12,7 +12,7 @@
  struct file {
     uint32_t fd_pos;        /* 当前文件操作的偏移地址 */
     uint32_t fd_flag;       /* 文件操作标识 */
-    struct inode* fd_inode; /* 位于内存中inode缓冲队列的指针 */
+    struct inode * fd_inode; /* 位于内存中inode缓冲队列的指针 */
  };
  
  /* 标准输入输出描述符 */
