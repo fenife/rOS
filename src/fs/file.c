@@ -257,7 +257,7 @@ int32_t file_open(uint32_t inode_no, uint8_t flag)
     /* 只要是关于写文件，判断是否有其它进程正写此文件 
      * 若是读文件或创建文件，不用理会write_deny，保持默认
      */
-    if (flag & O_WRONLY || flag & O_RDWR) 
+    if (flag == O_WRONLY || flag == O_RDWR) 
     {    
         /* 以下进入临界区前先关中断 */
         intr_status old_status = intr_disable();
