@@ -21,6 +21,9 @@ struct lock pid_lock;                   /* 分配pid锁 */
 static struct node * thread_tag;        /* 用于保存队列中的线程结点 */
 
 
+extern void switch_to(struct task_struct * cur, struct task_struct *next);
+
+
 /* 系统空闲时运行的线程 */
 static void idle(void *arg UNUSED)
 {
@@ -67,6 +70,15 @@ static pid_t allocate_pid(void)
     lock_release(&pid_lock);
 
     return next_pid;
+}
+
+
+/* fork进程时为其分配pid，因为allocate_pid已经是静态的，别的文件无法调用
+ * 不想改变函数定义了，故定义fork_pid函数来封装一下
+ */
+pid_t fork_pid(void) 
+{
+    return allocate_pid();
 }
 
 
@@ -136,7 +148,10 @@ void init_thread(task_struct * pthread, char * name, int pri)
         pthread->fd_table[fd_idx] = -1;
         fd_idx++;
     }
+
     pthread->cwd_inode_nr = 0;	    /* 以根目录做为默认工作路径 */
+    pthread->parent_pid = -1;       /* 1表示没有父进程 */
+    
     pthread->stack_magic = STACK_BORDER_MAGIC;
 }
 

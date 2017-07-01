@@ -31,11 +31,14 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/ioqueue.o ${OBJS_DIR}/tss.o ${OBJS_DIR}/process.o	\
 		${OBJS_DIR}/syscall.o ${OBJS_DIR}/sys.o ${OBJS_DIR}/stdio.o	\
 		${OBJS_DIR}/ide.o ${OBJS_DIR}/fs.o ${OBJS_DIR}/inode.o \
-		${OBJS_DIR}/file.o ${OBJS_DIR}/dir.o
+		${OBJS_DIR}/file.o ${OBJS_DIR}/dir.o ${OBJS_DIR}/fork.o
 
 all : build rhd
 
 ##############     c代码编译     ###############
+${OBJS_DIR}/fork.o : ${TOP_DIR}/user/fork.c
+	${CC} ${CFLAGS} $< -o $@
+
 ${OBJS_DIR}/interrupt.o : ${TOP_DIR}/kernel/interrupt.c
 	${CC} ${CFLAGS} $< -o $@
 

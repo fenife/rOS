@@ -302,6 +302,25 @@ void * get_a_page(poolfg pf, uint32_t vaddr)
     return (void *)vaddr;
 }
 
+
+/* 为vaddr分配一个物理页，专门针对fork时虚拟地址位图无须操作的情况 */
+void* get_a_page_without_opvaddrbitmap(poolfg pf, uint32_t vaddr) 
+{
+    struct phm_pool *mem_pool = (pf & PF_KERNEL) ? &kernel_pool : &user_pool;
+    lock_acquire(&mem_pool->lock);
+    void* page_phyaddr = palloc(mem_pool);
+    if (page_phyaddr == NULL) 
+    {
+        lock_release(&mem_pool->lock);
+        return NULL;
+    }
+    
+    page_table_add((void*)vaddr, page_phyaddr); 
+    lock_release(&mem_pool->lock);
+    return (void*)vaddr;
+}
+
+
 /* 返回虚拟地址映射到的物理地址 */
 uint32_t addr_v2p(uint32_t vaddr)
 {
