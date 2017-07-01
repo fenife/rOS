@@ -20,8 +20,8 @@ struct list thread_all_list;            /* 所有任务队列 */
 struct lock pid_lock;                   /* 分配pid锁 */
 static struct node * thread_tag;        /* 用于保存队列中的线程结点 */
 
-
 extern void switch_to(struct task_struct * cur, struct task_struct *next);
+extern void init(void);
 
 
 /* 系统空闲时运行的线程 */
@@ -309,6 +309,12 @@ void thread_init(void)
     list_init(&thread_all_list);
     lock_init(&pid_lock);
 
+    
+    /* 先创建第一个用户进程: init 
+     * 放在第一个初始化，这是第一个进程，init进程的pid为1
+     */
+    process_execute(init, "init"); 
+    
     /* 将当前main函数创建为线程 */
     make_main_thread();
 
