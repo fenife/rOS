@@ -29,23 +29,30 @@ int main(void)
 {
     put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
-  
-    process_execute(u_prog_a, "u_prog_a");
-    process_execute(u_prog_b, "u_prog_b");
 
-    thread_start("k_thread_a", 31, k_thread_a, "k_thread_a");
-    thread_start("k_thread_b", 31, k_thread_b, "k_thread_b");
-
+    /************ test code start ***************/
+    
     struct dir* p_dir = sys_opendir("/dir1/subdir1");
     if (p_dir) 
     {
-        printf("/dir1/subdir1 open done!\n");
+        printf("/dir1/subdir1 open done!\ncontent:\n");
+        char* type = NULL;
+        struct dir_entry* dir_e = NULL;
+        while((dir_e = sys_readdir(p_dir))) 
+        { 
+            if (dir_e->f_type == FT_REGULAR) 
+            {
+                type = "regular";
+            } else {
+                type = "directory";
+            }
+            printf("   %-10s  %s\n", type, dir_e->filename);
+        }
+        
         if (sys_closedir(p_dir) == 0) 
         {
             printf("/dir1/subdir1 close done!\n");
-        } 
-        else 
-        {
+        } else {
             printf("/dir1/subdir1 close fail!\n");
         }
     } 
@@ -54,6 +61,7 @@ int main(void)
         printf("/dir1/subdir1 open fail!\n");
     }
     
+    /************ test code end ***************/
     while (1)
         ;
 
