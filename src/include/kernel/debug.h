@@ -7,7 +7,7 @@
 
 #define KDEBUG
 
-void panic(const char *filename, int line, const char *func_name,
+void kpanic(const char *filename, int line, const char *func_name,
                 const char *cond);
 
 /* __FILE__表示被编译的文件名，
@@ -15,7 +15,7 @@ void panic(const char *filename, int line, const char *func_name,
  * __func__表示被编译的函数名
  * __VA_ARGS__表示可变参数
  */
-#define PANIC(...) panic(__FILE__, __LINE__, __func__, __VA_ARGS__)
+#define PANIC(...) kpanic(__FILE__, __LINE__, __func__, __VA_ARGS__)
 
 /* 可以在编译的时候用gcc的-D选项来定义此宏，也可以定义在Makefile中 */
 #ifdef KDEBUG       /* kernel debug */
