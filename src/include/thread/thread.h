@@ -91,10 +91,7 @@ typedef struct task_struct{
     char name[16];
     uint8_t priority;       /* 线程优先级 */
     uint8_t ticks;          /* 每次在处理器上执行的时间嘀嗒数 */
-    uint32_t elapsed_ticks; /* 此任务执行了多久 */
-
-    /* 文件描述符数组 */
-    int32_t fd_table[MAX_FILES_OPEN_PER_PROC];  
+    uint32_t elapsed_ticks; /* 此任务执行了多久 */ 
 
     /* general_tag的作用是用于线程在一般的队列中的结点 */
     struct node general_tag;
@@ -110,6 +107,11 @@ typedef struct task_struct{
     /* 用户进程内存块描述符 */
     struct mem_block_desc u_block_desc[DESC_CNT];
 
+    /* 文件描述符数组 */
+    int32_t fd_table[MAX_FILES_OPEN_PER_PROC]; 
+    
+    uint32_t cwd_inode_nr;  /* 进程所在的工作目录的inode编号 */
+    
     uint32_t stack_magic;   /* 用这串数字做栈的边界标记，用于检测栈的溢出 */
 } task_struct;
 

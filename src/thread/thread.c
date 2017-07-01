@@ -136,7 +136,7 @@ void init_thread(task_struct * pthread, char * name, int pri)
         pthread->fd_table[fd_idx] = -1;
         fd_idx++;
     }
-    
+    pthread->cwd_inode_nr = 0;	    /* 以根目录做为默认工作路径 */
     pthread->stack_magic = STACK_BORDER_MAGIC;
 }
 
