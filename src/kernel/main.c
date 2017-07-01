@@ -18,6 +18,7 @@
 #include <memory.h>
 #include <timer.h>
 #include <fs.h>
+#include <dir.h>
 
 void k_thread_a(void *arg);
 void k_thread_b(void *arg);
@@ -28,16 +29,20 @@ int main(void)
 {
     put_str("kernel start ... \n");
     init_all();     /* 初始化所有模块 */
-  
-    process_execute(u_prog_a, "u_prog_a");
-    process_execute(u_prog_b, "u_prog_b");
 
-    thread_start("k_thread_a", 31, k_thread_a, "k_thread_a");
-    thread_start("k_thread_b", 31, k_thread_b, "k_thread_b");
-
-    printf("/file1 delete %s!\n", 
-            sys_unlink("/file1") == 0 ? "done" : "fail");
+    /************ test code start ***************/
     
+    struct stat obj_stat;
+    sys_stat("/", &obj_stat);
+    printf("/'s info\n   i_no: %d\n   size: %d\n   filetype: %s\n", \
+                obj_stat.st_ino, obj_stat.st_size, \
+                obj_stat.st_filetype == 2 ? "directory" : "regular");
+    sys_stat("/dir1", &obj_stat);
+    printf("/dir1's info\n   i_no: %d\n   size: %d\n   filetype: %s\n", \
+                obj_stat.st_ino, obj_stat.st_size, \
+                obj_stat.st_filetype == 2 ? "directory" : "regular");
+    
+    /************ test code end ***************/
     while (1)
         ;
 

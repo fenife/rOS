@@ -32,5 +32,5 @@ void init_all(void)
     ide_init();         /* 初始化硬盘 */
     filesys_init();     /* 初始化文件系统 */
 
-    put_str("init_all done.\n");
+    put_str("init_all done.\n\n");
 }
