@@ -19,6 +19,8 @@
 #include <timer.h>
 #include <fs.h>
 #include <dir.h>
+#include <shell.h>
+#include <assert.h>
 
 void init(void);
 
@@ -29,7 +31,8 @@ int main(void)
 
     /************ test code start ***************/
     
-    
+    cls_screen();
+    console_put_str("[user@localhost /]$ ");
     
     /************ test code end ***************/
     while (1)
@@ -42,18 +45,20 @@ int main(void)
 void init(void)
 {
     uint32_t ret_pid = fork();
-    if(ret_pid) 
+    if(ret_pid)     /* 父进程 */
     {
         printf("I am father, my pid is %d, child pid is %d\n", 
                     getpid(), ret_pid);
+        while(1)
+            ;
     } 
-    else 
+    else    /* 子进程 */
     {
         printf("I am child, my pid is %d, ret pid is %d\n", 
                     getpid(), ret_pid);
+        my_shell();
     }
     
-    while(1)
-        ;
+    panic("init: should not be here\n");
 }
 
