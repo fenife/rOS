@@ -92,3 +92,15 @@ int32_t read(int32_t fd, void* buf, uint32_t count)
     return _syscall3(SYS_READ, fd, buf, count);
 }
 
+/* 输出一个字符 */
+void putchar(char c) 
+{
+    _syscall1(SYS_PUTCHAR, c);
+}
+
+/* 清空屏幕 */
+void clear(void) 
+{
+    _syscall0(SYS_CLEAR);
+}
+
