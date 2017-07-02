@@ -52,6 +52,23 @@ static void readline(char* buf, int32_t count)
                 }
                 break;
 
+            /* ctrl+l 清屏 */
+            case 'l' - 'a':               
+                *pos = 0;           /* 1 先将当前的字符'l'-'a'置为0 */
+                clear();            /* 2 再将屏幕清空 */                
+                print_prompt();     /* 3 打印提示符 */                
+                printf("%s", buf);  /* 4 将之前键入的内容再次打印 */
+                break;
+
+            /* ctrl+u 清掉输入 */
+            case 'u' - 'a':
+                while (buf != pos)
+                {
+                    putchar('\b');
+                    *(pos--) = 0;
+                }
+                break;
+
             /* 非控制键则输出字符 */
             default:
                 putchar(*pos);
