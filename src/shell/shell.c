@@ -10,6 +10,7 @@
 #include <global.h>
 #include <assert.h>
 #include <string.h>
+#include <buildin_cmd.h>
 
 #define MAX_ARG_NR 16	/* 加上命令名外，最多支持15个参数 */
 
@@ -53,7 +54,7 @@ static void readline(char* buf, int32_t count)
                 return;
 
             case '\b':         
-                if (buf[0] != '\b')     /* 阻止删除非本次输入的信息 */
+                if (cmd_line[0] != '\b')     /* 阻止删除非本次输入的信息 */
                 {       
                     --pos;              /* 退回到缓冲区cmd_line中上一个字符 */
                     putchar('\b');
@@ -150,6 +151,7 @@ static int32_t cmd_parse(char* cmd_str, char** argv, char token)
 void my_shell(void) 
 {
     cwd_cache[0] = '/';
+    cwd_cache[1] = 0;
     while (1) 
     {
         print_prompt(); 
@@ -170,13 +172,14 @@ void my_shell(void)
             continue;
         }
 
+        char buf[MAX_PATH_LEN] = {0};
         int32_t arg_idx = 0;
         while(arg_idx < argc) 
         {
-            printf("%s ", argv[arg_idx]); 
+            make_clear_abs_path(argv[arg_idx], buf);
+            printf("%s -> %s\n", argv[arg_idx], buf); 
             arg_idx++;
         }
-        printf("\n");
     }
     panic("my_shell: should not be here");
 }

@@ -1,10 +1,10 @@
 /* shell.h
  */
 
-#ifndef __KERNEL_SHELL_H
-#define __KERNEL_SHELL_H
+#ifndef __SHELL_SHELL_H
+#define __SHELL_SHELL_H
 
 void print_prompt(void);
 void my_shell(void);
  
-#endif
+#endif  /* __SHELL_SHELL_H */
