@@ -132,5 +132,6 @@ void thread_block(task_status stat);
 void thread_unblock(struct task_struct * pthread);
 void thread_yield(void);
 pid_t fork_pid(void);
+void sys_ps(void);
 
 #endif  /* __THREAD_THREAD_H */
