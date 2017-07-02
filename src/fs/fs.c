@@ -1012,7 +1012,7 @@ static int get_child_dir_name(uint32_t p_inode_nr,
 }
 
 
-/* 把当前工作目录绝对路径写入buf, size是buf的大小
+/* 把当前工作目录绝对路径写入buf，size是buf的大小
  * 当buf为NULL时，由操作系统分配存储工作路径的空间并返回地址
  * 失败则返回NULL
  */
