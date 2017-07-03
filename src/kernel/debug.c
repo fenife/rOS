@@ -7,7 +7,7 @@
 #include <interrupt.h>
 
 /* 关中断，打印文件名、行号、函数名、条件，并让程序悬停 */
-void panic(const char *filename, int line, const char *func_name,
+void kpanic(const char *filename, int line, const char *func_name,
                 const char *cond)
 {
     /* 关中断，防止屏幕的错误输出信息被其他进程干扰 */

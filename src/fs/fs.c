@@ -14,6 +14,8 @@
 #include <debug.h>
 #include <memory.h>
 #include <console.h>
+#include <keyboard.h>
+#include <ioqueue.h>
 
 struct partition * cur_part;    /* 默认情况下操作的是哪个分区 */
 
@@ -236,7 +238,7 @@ static void partition_format(struct partition * part)
 
 
 /* 将最上层路径名称解析出来 */
-static char* path_parse(char * pathname, char * name_store) 
+char* path_parse(char * pathname, char * name_store) 
 {
     if (pathname[0] == '/')     /* 根目录不需要单独解析 */
     {  
@@ -526,14 +528,31 @@ int32_t sys_write(int32_t fd, const void* buf, uint32_t count)
  */
 int32_t sys_read(int32_t fd, void* buf, uint32_t count) 
 {
-    if (fd < 0) 
+    kassert(buf != NULL);
+    int32_t ret = -1;
+    
+    if (fd < 0 || fd == stdout_no || fd == stderr_no) 
     {
         printk("sys_read: fd error\n");
-        return -1;
+    } 
+    else if (fd == stdin_no) 
+    {
+        char* buffer = buf;
+        uint32_t bytes_read = 0;
+        while (bytes_read < count) 
+        {
+            *buffer = ioq_getchar(&kbd_buf);
+            bytes_read++;
+            buffer++;
+        }
+        ret = (bytes_read == 0 ? -1 : (int32_t)bytes_read);
+    } 
+    else 
+    {
+        uint32_t _fd = fd_local2global(fd);
+        ret = file_read(&file_table[_fd], buf, count);   
     }
-    kassert(buf != NULL);
-    uint32_t _fd = fd_local2global(fd);
-    return file_read(&file_table[_fd], buf, count);   
+    return ret;
 }
 
 
@@ -993,7 +1012,7 @@ static int get_child_dir_name(uint32_t p_inode_nr,
 }
 
 
-/* 把当前工作目录绝对路径写入buf, size是buf的大小
+/* 把当前工作目录绝对路径写入buf，size是buf的大小
  * 当buf为NULL时，由操作系统分配存储工作路径的空间并返回地址
  * 失败则返回NULL
  */
@@ -1126,6 +1145,14 @@ int32_t sys_stat(const char* path, struct stat* buf)
     
     dir_close(searched_record.parent_dir);
     return ret;
+}
+
+/* 向屏幕输出一个字符 
+ * 本实现不同于标准实现，无返回值
+ */
+void sys_putchar(char c) 
+{
+   console_put_char(c);
 }
 
 

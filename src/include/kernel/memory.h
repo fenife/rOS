@@ -78,5 +78,7 @@ void * sys_malloc(uint32_t size);
 void mfree_page(poolfg pf, void * _vaddr, uint32_t pg_cnt);
 void pfree(uint32_t pg_phy_addr);
 void sys_free(void *ptr);
+void* get_a_page_without_opvaddrbitmap(poolfg pf, 
+                        uint32_t vaddr);
 
 #endif  /* __KERNEL_MEMORY_H */
