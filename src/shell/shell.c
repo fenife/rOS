@@ -25,7 +25,7 @@ char cwd_cache[MAX_PATH_LEN] = {0};
 
 
 /* argv必须为全局变量，为了以后exec的程序可访问参数 */
-char* argv[MAX_ARG_NR];    
+char* argv[MAX_ARG_NR] = { NULL };    
 int32_t argc = -1;
 
 
