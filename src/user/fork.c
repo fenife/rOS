@@ -45,13 +45,7 @@ static int32_t copy_pcb_vaddrbitmap_stack0(
     memcpy(vaddr_btmp, child_thread->user_vaddr.bm.bits, 
                                 bitmap_pg_cnt * PG_SIZE);
     child_thread->user_vaddr.bm.bits = vaddr_btmp;
-    
-    /************* 调试用 **************/
-
-    /* pcb.name的长度是16，为避免下面strcat越界 */
-    kassert(strlen(child_thread->name) < 11);	
-    strcat(child_thread->name,"_fork");
-    
+        
     return 0;
 }
 

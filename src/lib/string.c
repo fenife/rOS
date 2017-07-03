@@ -4,14 +4,14 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <debug.h>
+#include <assert.h>
 
 /* stroe c throughout unsigned char s[n]
  * 将s起始的n个字节置为c
  */
 void * memset(void *s, int c, size_t n)
 {
-    kassert(NULL != s);
+    assert(NULL != s);
 
     const unsigned char uc = c;
     unsigned char *su;
@@ -26,7 +26,7 @@ void * memset(void *s, int c, size_t n)
  */
 void * memcpy(void *s1, const void *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
 
     char *su1;
     const char *su2;
@@ -42,7 +42,7 @@ void * memcpy(void *s1, const void *s2, size_t n)
  */
 int memcmp(const void *s1, const void *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
 
     const unsigned char *su1, *su2;
 
@@ -57,7 +57,7 @@ int memcmp(const void *s1, const void *s2, size_t n)
  */
 char * strcpy(char *s1, const char *s2)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     char *s = s1;
 
@@ -72,7 +72,7 @@ char * strcpy(char *s1, const char *s2)
  */
 size_t strlen(const char *s)
 {
-    kassert(NULL != s);
+    assert(NULL != s);
     
     const char *sc;
 
@@ -88,7 +88,7 @@ size_t strlen(const char *s)
  */
 int strcmp(const char *s1, const char *s2)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     for ( ; *s1 == *s2; ++s1, ++s2)
         if (*s1 == '\0')
@@ -102,7 +102,7 @@ int strcmp(const char *s1, const char *s2)
  */
 char * strchr(const char *s, int c)
 {
-    kassert(NULL != s);
+    assert(NULL != s);
     
     const char ch = c;
 
@@ -117,7 +117,7 @@ char * strchr(const char *s, int c)
  */
 char * strrchr(const char *s, int c)
 {
-    kassert(NULL != s);
+    assert(NULL != s);
     
     const char ch = c;
     const char *sc;
@@ -136,7 +136,7 @@ char * strrchr(const char *s, int c)
  */
 char * strcat(char *s1, const char *s2)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     char *s;
 
@@ -155,7 +155,7 @@ char * strcat(char *s1, const char *s2)
 /* copy char s2[max n] to end of s1[] */
 char * strncat(char *s1, const char *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     char *s;
 
@@ -173,7 +173,7 @@ char * strncat(char *s1, const char *s2, size_t n)
 /* compare unsigned char s1[max n], s2[max n] */
 int strncmp(const char *s1, const char *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     for ( ; 0 < n; ++s1, ++s2, --n)
         if (*s1 != *s2)
@@ -187,7 +187,7 @@ int strncmp(const char *s1, const char *s2, size_t n)
 /* copy char s2[max n] to s1[n] */
 char * strncpy(char *s1, const char *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     char *s;
 
@@ -205,7 +205,7 @@ char * strncpy(char *s1, const char *s2, size_t n)
 /* find first occurrence of s2[] in s1[] */
 char * strstr(const char *s1, const char *s2)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     if (*s2 == '\0')
         return ((char *)s1);
@@ -226,7 +226,7 @@ char * strstr(const char *s1, const char *s2)
 /* find first occurrence of c in s[n] */
 void * memchr(const void *s, int c, size_t n)
 {
-    kassert(NULL != s);
+    assert(NULL != s);
 
     const unsigned char uc = c;
     const unsigned char *su;
@@ -241,7 +241,7 @@ void * memchr(const void *s, int c, size_t n)
 /* copy char s2[n] to s1[n] safely */
 void * memmove(void *s1, const void *s2, size_t n)
 {
-    kassert(NULL != s1 && NULL != s2);
+    assert(NULL != s1 && NULL != s2);
     
     char * sc1;
     const char *sc2;

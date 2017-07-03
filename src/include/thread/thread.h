@@ -11,6 +11,8 @@
 /* 下面的魔数作为栈的边界标记，用于检测栈的溢出 */
 #define STACK_BORDER_MAGIC  0x20170620
 
+#define TASK_NAME_LEN 16
+
 /* 每个进程可以打开的文件数 */
 #define MAX_FILES_OPEN_PER_PROC 8
 
@@ -88,7 +90,7 @@ typedef struct task_struct{
     uint32_t * self_kstack; /* 各内核线程都用自己的内核栈 */
     pid_t pid;
     task_status status;
-    char name[16];
+    char name[TASK_NAME_LEN];
     uint8_t priority;       /* 线程优先级 */
     uint8_t ticks;          /* 每次在处理器上执行的时间嘀嗒数 */
     uint32_t elapsed_ticks; /* 此任务执行了多久 */ 

@@ -33,12 +33,16 @@ OBJS := ${OBJS_DIR}/main.o  ${OBJS_DIR}/init.o ${OBJS_DIR}/interrupt.o \
 		${OBJS_DIR}/syscall.o ${OBJS_DIR}/sys.o ${OBJS_DIR}/stdio.o	\
 		${OBJS_DIR}/ide.o ${OBJS_DIR}/fs.o ${OBJS_DIR}/inode.o \
 		${OBJS_DIR}/file.o ${OBJS_DIR}/dir.o ${OBJS_DIR}/fork.o \
-		${OBJS_DIR}/shell.o ${OBJS_DIR}/assert.o ${OBJS_DIR}/buildin_cmd.o
-
+		${OBJS_DIR}/shell.o ${OBJS_DIR}/assert.o ${OBJS_DIR}/buildin_cmd.o \
+		${OBJS_DIR}/exec.o
+		
 all : build rhd
 
 ##############     c代码编译     ###############
 ${OBJS_DIR}/buildin_cmd.o : ${TOP_DIR}/shell/buildin_cmd.c
+	${CC} ${CFLAGS} $< -o $@
+
+${OBJS_DIR}/exec.o : ${TOP_DIR}/user/exec.c
 	${CC} ${CFLAGS} $< -o $@
 
 ${OBJS_DIR}/assert.o : ${TOP_DIR}/lib/user/assert.c

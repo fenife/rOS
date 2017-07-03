@@ -275,7 +275,7 @@ void * get_a_page(poolfg pf, uint32_t vaddr)
     if (cur->pgdir != NULL && pf == PF_USER)
     {
         bit_idx = (vaddr - cur->user_vaddr.vm_start) / PG_SIZE;
-        kassert(bit_idx > 0);
+        kassert(bit_idx >= 0);
         bitmap_set(&cur->user_vaddr.bm, bit_idx, 1);
     }
     else if (cur->pgdir == NULL && pf == PF_KERNEL)

@@ -31,6 +31,7 @@ enum SYSCALL_NR {
     SYS_REWINDDIR,
     SYS_STAT,
     SYS_PS,
+    SYS_EXECV,
 };
 
 uint32_t getpid(void);
@@ -55,5 +56,7 @@ void rewinddir(struct dir* dir);
 int32_t stat(const char* path, struct stat* buf);
 int32_t chdir(const char* path);
 void ps(void);
+int execv(const char* pathname, char** argv);
+
 
 #endif  /* __LIB_USER_SYSCALL_H */
