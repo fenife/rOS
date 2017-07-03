@@ -1,9 +1,9 @@
 /* prog_arg.c
  */
 
-#include "stdio.h"
-#include "syscall.h"
-#include "string.h"
+#include <stdio.h>
+#include <user/syscall.h>
+#include <string.h>
 
 int main(int argc, char** argv) 
 {
